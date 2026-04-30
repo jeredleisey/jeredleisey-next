@@ -56,9 +56,8 @@ export default function HomePage() {
             <span className="text-my-cream text-sm font-light leading-snug group-hover:text-my-orange transition-colors">
               {latestProject.metadata.title}
             </span>
-            <span className="text-my-stone text-xs">
-              {latestProject.metadata.lessons.length} lesson
-              {latestProject.metadata.lessons.length !== 1 ? 's' : ''} referenced
+            <span className="text-my-stone text-xs leading-relaxed">
+              {latestProject.metadata.description}
             </span>
             <span className="mt-auto text-my-stone/60 text-xs uppercase tracking-widest group-hover:text-my-orange transition-colors">
               See it →

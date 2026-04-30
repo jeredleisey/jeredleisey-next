@@ -14,6 +14,12 @@ function formatDate(iso: string) {
   });
 }
 
+function readTime(content: string): string {
+  const words = content.trim().split(/\s+/).length;
+  const minutes = Math.max(1, Math.round(words / 200));
+  return `${minutes} min read`;
+}
+
 export default async function EssayPage({ params }: { params: Promise<{ essay: string }> }) {
   const { essay: essaySlug } = await params;
   const essay = getEssay(essaySlug);
@@ -23,7 +29,7 @@ export default async function EssayPage({ params }: { params: Promise<{ essay: s
     <div className="p-pad-2 max-w-2xl">
       <div className="mb-8">
         <p className="text-my-stone text-xs uppercase tracking-widest mb-3">
-          {formatDate(essay.metadata.date)}
+          {formatDate(essay.metadata.date)} · {readTime(essay.content)}
         </p>
         <h1 className="text-my-cream text-2xl font-light leading-snug">
           {essay.metadata.title}

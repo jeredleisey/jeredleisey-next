@@ -28,16 +28,12 @@ export function Sidebar({ allSeries, allProjects, allEssays }: SidebarProps) {
     <aside className="w-48 shrink-0 flex flex-col border-r border-my-espresso/30 px-pad-2 py-pad-2">
       <GlobalNav />
 
-      {currentSeries && (
-        <SeriesTOC series={currentSeries} />
-      )}
-
-      {inProjects && (
-        <ProjectsList projects={allProjects} />
-      )}
-
-      {inWriting && (
-        <WritingList essays={allEssays} />
+      {(currentSeries || inProjects || inWriting) && (
+        <div className="border-t border-my-espresso/30 mt-2">
+          {currentSeries && <SeriesTOC series={currentSeries} />}
+          {inProjects && <ProjectsList projects={allProjects} />}
+          {inWriting && <WritingList essays={allEssays} />}
+        </div>
       )}
 
       <div className="mt-auto text-my-espresso/40 text-xs">
