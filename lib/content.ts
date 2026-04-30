@@ -18,7 +18,7 @@ import type {
 
 const DEFAULT_CONTENT_DIR = path.join(process.cwd(), 'content');
 
-function readMdx(filePath: string): { data: Record<string, unknown>; content: string } {
+function readMdx(filePath: string): { data: unknown; content: string } {
   const raw = fs.readFileSync(filePath, 'utf-8');
   return matter(raw);
 }
@@ -33,8 +33,9 @@ function lessonSlugFromFilename(filename: string): string {
 export function getAllSeries(contentDir = DEFAULT_CONTENT_DIR): SeriesWithLessons[] {
   const learnDir = path.join(contentDir, 'learn');
   const seriesDirs = fs
-    .readdirSync(learnDir)
-    .filter((name) => fs.statSync(path.join(learnDir, name)).isDirectory());
+    .readdirSync(learnDir, { withFileTypes: true })
+    .filter((entry) => entry.isDirectory())
+    .map((entry) => entry.name);
 
   return seriesDirs
     .map((seriesSlug) => {
@@ -77,14 +78,14 @@ export function getLesson(
   const series = getSeries(seriesSlug, contentDir);
   if (!series) return null;
 
+  const idx = series.lessons.findIndex((l) => l.slug === lessonSlug);
+  if (idx === -1) return null;
+
   const seriesDir = path.join(contentDir, 'learn', seriesSlug);
   const files = fs
     .readdirSync(seriesDir)
     .filter((f) => f.endsWith('.mdx') && !f.startsWith('_'))
     .sort();
-
-  const idx = files.findIndex((f) => lessonSlugFromFilename(f) === lessonSlug);
-  if (idx === -1) return null;
 
   const { data, content } = readMdx(path.join(seriesDir, files[idx]));
 
@@ -93,7 +94,7 @@ export function getLesson(
       ? { slug: series.lessons[idx - 1].slug, title: series.lessons[idx - 1].metadata.title }
       : null;
   const next =
-    idx < files.length - 1
+    idx < series.lessons.length - 1
       ? { slug: series.lessons[idx + 1].slug, title: series.lessons[idx + 1].metadata.title }
       : null;
 
@@ -101,7 +102,7 @@ export function getLesson(
     seriesSlug,
     lessonSlug,
     seriesTitle: series.metadata.title,
-    totalLessons: files.length,
+    totalLessons: series.lessons.length,
     metadata: data as LessonMetadata,
     content,
     prev,
