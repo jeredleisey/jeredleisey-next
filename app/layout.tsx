@@ -7,6 +7,9 @@ import { getAllSeries, getAllProjects, getAllEssays } from '@/lib/content';
 export const metadata: Metadata = {
   title: 'Jered Leisey',
   description: "Whatever I'm into, I'm all the way in.",
+  icons: {
+    icon: [{ url: '/signature.svg', type: 'image/svg+xml' }],
+  },
 };
 
 export default async function RootLayout({
