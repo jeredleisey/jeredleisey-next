@@ -2,7 +2,6 @@ import type { Config } from 'tailwindcss';
 import typography from '@tailwindcss/typography';
 
 export default {
-  darkMode: 'class',
   content: [
     './app/**/*.{ts,tsx}',
     './components/**/*.{ts,tsx}',
@@ -14,7 +13,6 @@ export default {
           cream: '#F4EFE6',
           parchment: '#EAE3D6',
           stone: '#C2B8A8',
-          walnut: '#7A6E64',
           amber: '#CC922F',
           espresso: '#1C1714',
           orange: '#FF4F00',
