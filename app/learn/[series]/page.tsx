@@ -6,6 +6,16 @@ export async function generateStaticParams() {
   return getAllSeries().map((s) => ({ series: s.slug }));
 }
 
+export async function generateMetadata({ params }: { params: Promise<{ series: string }> }) {
+  const { series: seriesSlug } = await params;
+  const series = getSeries(seriesSlug);
+  if (!series) return {};
+  return {
+    title: `${series.metadata.title} — Jered Leisey`,
+    description: series.metadata.description,
+  };
+}
+
 export default async function SeriesPage({ params }: { params: Promise<{ series: string }> }) {
   const { series: seriesSlug } = await params;
   const series = getSeries(seriesSlug);

@@ -32,6 +32,7 @@ function lessonSlugFromFilename(filename: string): string {
 
 export function getAllSeries(contentDir = DEFAULT_CONTENT_DIR): SeriesWithLessons[] {
   const learnDir = path.join(contentDir, 'learn');
+  if (!fs.existsSync(learnDir)) return [];
   const seriesDirs = fs
     .readdirSync(learnDir, { withFileTypes: true })
     .filter((entry) => entry.isDirectory())

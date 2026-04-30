@@ -1,15 +1,8 @@
 import Link from 'next/link';
 import { getAllEssays } from '@/lib/content';
+import { formatDate } from '@/lib/utils';
 
 export const metadata = { title: 'Writing — Jered Leisey' };
-
-function formatDate(iso: string) {
-  return new Date(iso).toLocaleDateString('en-US', {
-    year: 'numeric',
-    month: 'long',
-    day: 'numeric',
-  });
-}
 
 export default function WritingPage() {
   const essays = getAllEssays();

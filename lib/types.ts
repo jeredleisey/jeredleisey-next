@@ -10,7 +10,7 @@ export interface SeriesMetadata {
 export interface LessonMetadata {
   title: string;
   order: number;
-  description: string;
+  description?: string;
 }
 
 export interface ProjectMetadata {

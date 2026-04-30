@@ -13,6 +13,20 @@ export async function generateStaticParams() {
   );
 }
 
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ series: string; lesson: string }>;
+}) {
+  const { series: seriesSlug, lesson: lessonSlug } = await params;
+  const lesson = getLesson(seriesSlug, lessonSlug);
+  if (!lesson) return {};
+  return {
+    title: `${lesson.metadata.title} — Jered Leisey`,
+    description: lesson.metadata.description,
+  };
+}
+
 export default async function LessonPage({
   params,
 }: {

@@ -7,6 +7,16 @@ export async function generateStaticParams() {
   return getAllProjects().map((p) => ({ project: p.slug }));
 }
 
+export async function generateMetadata({ params }: { params: Promise<{ project: string }> }) {
+  const { project: projectSlug } = await params;
+  const project = getProject(projectSlug);
+  if (!project) return {};
+  return {
+    title: `${project.metadata.title} — Jered Leisey`,
+    description: project.metadata.description,
+  };
+}
+
 export default async function ProjectPage({ params }: { params: Promise<{ project: string }> }) {
   const { project: projectSlug } = await params;
   const project = getProject(projectSlug);
