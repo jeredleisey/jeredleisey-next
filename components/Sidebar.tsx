@@ -32,7 +32,7 @@ export function Sidebar({ allSeries, allProjects, allEssays }: SidebarProps) {
         <SeriesTOC series={currentSeries} />
       )}
 
-      {inProjects && !lessonMatch && (
+      {inProjects && (
         <ProjectsList projects={allProjects} />
       )}
 

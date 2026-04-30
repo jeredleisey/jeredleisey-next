@@ -20,6 +20,7 @@ export function WritingList({ essays }: WritingListProps) {
           <Link
             key={essay.slug}
             href={href}
+            aria-current={active ? 'page' : undefined}
             className={`text-xs leading-snug py-1 pl-2 border-l-2 transition-colors ${
               active
                 ? 'border-my-orange text-my-cream bg-my-orange/5'
