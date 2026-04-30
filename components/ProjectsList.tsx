@@ -23,8 +23,8 @@ export function ProjectsList({ projects }: ProjectsListProps) {
             aria-current={active ? 'page' : undefined}
             className={`text-xs leading-snug py-1 pl-2 border-l-2 transition-colors ${
               active
-                ? 'border-my-orange text-my-cream bg-my-orange/5'
-                : 'border-my-espresso/40 text-my-stone hover:text-my-cream hover:border-my-stone'
+                ? 'border-my-orange text-my-espresso dark:text-my-cream bg-my-orange/5'
+                : 'border-my-stone/40 dark:border-my-espresso/40 text-my-walnut hover:text-my-espresso hover:border-my-espresso dark:text-my-stone dark:hover:text-my-cream dark:hover:border-my-stone'
             }`}
           >
             {project.metadata.title}
