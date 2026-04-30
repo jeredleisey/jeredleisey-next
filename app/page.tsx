@@ -46,7 +46,7 @@ export default function HomePage() {
         {latestProject && (
           <Link
             href={`/projects/${latestProject.slug}`}
-            className="group border border-my-stone/40 dark:border-my-espresso/40 p-4 flex flex-col gap-2 hover:border-my-stone/40 transition-colors"
+            className="group border border-my-stone/40 dark:border-my-espresso/40 p-4 flex flex-col gap-2 hover:border-my-stone/40 dark:hover:border-my-espresso/60 transition-colors"
           >
             <span className="text-my-walnut dark:text-my-stone text-xs uppercase tracking-widest">
               Latest Project
@@ -66,7 +66,7 @@ export default function HomePage() {
         {latestEssay && (
           <Link
             href={`/writing/${latestEssay.slug}`}
-            className="col-span-2 group border border-my-stone/40 dark:border-my-espresso/40 p-4 flex flex-col gap-2 hover:border-my-stone/40 transition-colors"
+            className="col-span-2 group border border-my-stone/40 dark:border-my-espresso/40 p-4 flex flex-col gap-2 hover:border-my-stone/40 dark:hover:border-my-espresso/60 transition-colors"
           >
             <span className="text-my-walnut dark:text-my-stone text-xs uppercase tracking-widest">
               Recent Writing
