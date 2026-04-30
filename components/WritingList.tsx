@@ -1,0 +1,35 @@
+'use client';
+
+import Link from 'next/link';
+import { usePathname } from 'next/navigation';
+import type { EssaySummary } from '@/lib/types';
+
+interface WritingListProps {
+  essays: EssaySummary[];
+}
+
+export function WritingList({ essays }: WritingListProps) {
+  const pathname = usePathname();
+
+  return (
+    <div className="pt-pad-2 flex flex-col gap-1">
+      {essays.map((essay) => {
+        const href = `/writing/${essay.slug}`;
+        const active = pathname === href;
+        return (
+          <Link
+            key={essay.slug}
+            href={href}
+            className={`text-xs leading-snug py-1 pl-2 border-l-2 transition-colors ${
+              active
+                ? 'border-my-orange text-my-cream bg-my-orange/5'
+                : 'border-my-espresso/40 text-my-stone hover:text-my-cream hover:border-my-stone'
+            }`}
+          >
+            {essay.metadata.title}
+          </Link>
+        );
+      })}
+    </div>
+  );
+}
