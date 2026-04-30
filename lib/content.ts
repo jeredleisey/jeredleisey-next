@@ -114,6 +114,7 @@ export function getLesson(
 
 export function getAllProjects(contentDir = DEFAULT_CONTENT_DIR): ProjectSummary[] {
   const projectsDir = path.join(contentDir, 'projects');
+  if (!fs.existsSync(projectsDir)) return [];
   return fs
     .readdirSync(projectsDir)
     .filter((f) => f.endsWith('.mdx'))
@@ -141,7 +142,7 @@ export function getProject(
   const metadata = data as ProjectMetadata;
 
   const allSeries = getAllSeries(contentDir);
-  const lessonRefs: LessonRef[] = metadata.lessons.map((ref) => {
+  const lessonRefs: LessonRef[] = (metadata.lessons ?? []).map((ref) => {
     const [refSeriesSlug, refLessonSlug] = ref.split('/');
     const series = allSeries.find((s) => s.slug === refSeriesSlug);
     const lesson = series?.lessons.find((l) => l.slug === refLessonSlug);
@@ -161,6 +162,7 @@ export function getProject(
 
 export function getAllEssays(contentDir = DEFAULT_CONTENT_DIR): EssaySummary[] {
   const writingDir = path.join(contentDir, 'writing');
+  if (!fs.existsSync(writingDir)) return [];
   return fs
     .readdirSync(writingDir)
     .filter((f) => f.endsWith('.mdx'))
