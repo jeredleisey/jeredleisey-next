@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import path from 'path';
-import { getAllSeries, getSeries, getLesson } from '@/lib/content';
+import { getAllSeries, getSeries, getLesson, getAllProjects, getProject, getAllEssays, getEssay } from '@/lib/content';
 
 const FIXTURES = path.join(__dirname, '../fixtures/content');
 
@@ -68,5 +68,60 @@ describe('getLesson', () => {
 
   it('returns null for unknown lesson', () => {
     expect(getLesson('test-series', 'no-such-lesson', FIXTURES)).toBeNull();
+  });
+});
+
+describe('getAllProjects', () => {
+  it('returns all projects sorted by date descending', () => {
+    const projects = getAllProjects(FIXTURES);
+    expect(projects).toHaveLength(1);
+    expect(projects[0].slug).toBe('test-project');
+    expect(projects[0].metadata.title).toBe('Test Project');
+  });
+});
+
+describe('getProject', () => {
+  it('returns project content and metadata', () => {
+    const project = getProject('test-project', FIXTURES);
+    expect(project).not.toBeNull();
+    expect(project!.metadata.title).toBe('Test Project');
+    expect(project!.content).toContain('Project content here.');
+  });
+
+  it('resolves lesson refs with title and level', () => {
+    const project = getProject('test-project', FIXTURES);
+    expect(project!.lessonRefs).toHaveLength(2);
+    expect(project!.lessonRefs[0]).toMatchObject({
+      seriesSlug: 'test-series',
+      lessonSlug: 'first-lesson',
+      lessonTitle: 'First Lesson',
+      level: 101,
+      href: '/learn/test-series/first-lesson',
+    });
+  });
+
+  it('returns null for unknown slug', () => {
+    expect(getProject('no-such-project', FIXTURES)).toBeNull();
+  });
+});
+
+describe('getAllEssays', () => {
+  it('returns essays sorted by date descending', () => {
+    const essays = getAllEssays(FIXTURES);
+    expect(essays).toHaveLength(1);
+    expect(essays[0].slug).toBe('test-essay');
+  });
+});
+
+describe('getEssay', () => {
+  it('returns essay content and metadata', () => {
+    const essay = getEssay('test-essay', FIXTURES);
+    expect(essay).not.toBeNull();
+    expect(essay!.metadata.title).toBe('Test Essay');
+    expect(essay!.content).toContain('Essay content here.');
+  });
+
+  it('returns null for unknown slug', () => {
+    expect(getEssay('no-such-essay', FIXTURES)).toBeNull();
   });
 });

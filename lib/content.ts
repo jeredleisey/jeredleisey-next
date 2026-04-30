@@ -109,3 +109,81 @@ export function getLesson(
     next,
   };
 }
+
+// ── projects ──────────────────────────────────────────────────────────────────
+
+export function getAllProjects(contentDir = DEFAULT_CONTENT_DIR): ProjectSummary[] {
+  const projectsDir = path.join(contentDir, 'projects');
+  return fs
+    .readdirSync(projectsDir)
+    .filter((f) => f.endsWith('.mdx'))
+    .map((filename) => {
+      const { data } = readMdx(path.join(projectsDir, filename));
+      return {
+        slug: filename.replace(/\.mdx$/, ''),
+        metadata: data as ProjectMetadata,
+      };
+    })
+    .sort(
+      (a, b) =>
+        new Date(b.metadata.date).getTime() - new Date(a.metadata.date).getTime(),
+    );
+}
+
+export function getProject(
+  slug: string,
+  contentDir = DEFAULT_CONTENT_DIR,
+): ProjectPage | null {
+  const filePath = path.join(contentDir, 'projects', `${slug}.mdx`);
+  if (!fs.existsSync(filePath)) return null;
+
+  const { data, content } = readMdx(filePath);
+  const metadata = data as ProjectMetadata;
+
+  const allSeries = getAllSeries(contentDir);
+  const lessonRefs: LessonRef[] = metadata.lessons.map((ref) => {
+    const [refSeriesSlug, refLessonSlug] = ref.split('/');
+    const series = allSeries.find((s) => s.slug === refSeriesSlug);
+    const lesson = series?.lessons.find((l) => l.slug === refLessonSlug);
+    return {
+      seriesSlug: refSeriesSlug,
+      lessonSlug: refLessonSlug,
+      lessonTitle: lesson?.metadata.title ?? refLessonSlug,
+      level: series?.metadata.level ?? 101,
+      href: `/learn/${refSeriesSlug}/${refLessonSlug}`,
+    };
+  });
+
+  return { slug, metadata, content, lessonRefs };
+}
+
+// ── essays ────────────────────────────────────────────────────────────────────
+
+export function getAllEssays(contentDir = DEFAULT_CONTENT_DIR): EssaySummary[] {
+  const writingDir = path.join(contentDir, 'writing');
+  return fs
+    .readdirSync(writingDir)
+    .filter((f) => f.endsWith('.mdx'))
+    .map((filename) => {
+      const { data } = readMdx(path.join(writingDir, filename));
+      return {
+        slug: filename.replace(/\.mdx$/, ''),
+        metadata: data as EssayMetadata,
+      };
+    })
+    .sort(
+      (a, b) =>
+        new Date(b.metadata.date).getTime() - new Date(a.metadata.date).getTime(),
+    );
+}
+
+export function getEssay(
+  slug: string,
+  contentDir = DEFAULT_CONTENT_DIR,
+): EssayPage | null {
+  const filePath = path.join(contentDir, 'writing', `${slug}.mdx`);
+  if (!fs.existsSync(filePath)) return null;
+
+  const { data, content } = readMdx(filePath);
+  return { slug, metadata: data as EssayMetadata, content };
+}
