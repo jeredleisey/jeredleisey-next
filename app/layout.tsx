@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import './globals.css';
 import { Sidebar } from '@/components/Sidebar';
+import { ThemeProvider } from '@/components/ThemeProvider';
 import { getAllSeries, getAllProjects, getAllEssays } from '@/lib/content';
 
 export const metadata: Metadata = {
@@ -19,15 +20,17 @@ export default async function RootLayout({
 
   return (
     <html lang="en" className="h-full">
-      <body className="h-full bg-my-espresso font-neue-montreal flex">
-        <Sidebar
-          allSeries={allSeries}
-          allProjects={allProjects}
-          allEssays={allEssays}
-        />
-        <main className="flex-1 overflow-y-auto">
-          {children}
-        </main>
+      <body className="h-full bg-my-cream dark:bg-my-espresso font-neue-montreal flex transition-colors duration-200">
+        <ThemeProvider>
+          <Sidebar
+            allSeries={allSeries}
+            allProjects={allProjects}
+            allEssays={allEssays}
+          />
+          <main className="flex-1 overflow-y-auto">
+            {children}
+          </main>
+        </ThemeProvider>
       </body>
     </html>
   );

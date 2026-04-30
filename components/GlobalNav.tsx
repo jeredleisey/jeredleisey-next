@@ -2,6 +2,7 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
+import { ThemeToggle } from './ThemeToggle';
 
 const NAV_ITEMS = [
   { label: 'Home', href: '/' },
@@ -19,8 +20,10 @@ export function GlobalNav() {
   }
 
   return (
-    <div className="pb-pad-2 border-b border-my-espresso/30">
-      <p className="text-my-cream text-sm font-light mb-pad-2">Jered Leisey</p>
+    <div className="pb-pad-2 border-b border-my-stone/30 dark:border-my-espresso/30">
+      <p className="text-my-espresso dark:text-my-cream text-sm font-light mb-pad-2">
+        Jered Leisey
+      </p>
       <nav aria-label="Site navigation" className="flex flex-col gap-2">
         {NAV_ITEMS.map(({ label, href }) => (
           <Link
@@ -28,13 +31,18 @@ export function GlobalNav() {
             href={href}
             aria-current={isActive(href) ? 'page' : undefined}
             className={`text-xs transition-colors duration-150 ${
-              isActive(href) ? 'text-my-orange' : 'text-my-stone hover:text-my-cream'
+              isActive(href)
+                ? 'text-my-orange'
+                : 'text-my-walnut hover:text-my-espresso dark:text-my-stone dark:hover:text-my-cream'
             }`}
           >
             {label}
           </Link>
         ))}
       </nav>
+      <div className="mt-3">
+        <ThemeToggle />
+      </div>
     </div>
   );
 }
