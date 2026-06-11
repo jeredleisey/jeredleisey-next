@@ -1,0 +1,39 @@
+---
+title: "Your documents are the prompt"
+date: "2026-05-14"
+description: "You already have the context Claude needs — it's sitting in your shared drive. The engineers getting the most out of AI aren't starting from scratch. They're starting from their own work product."
+---
+
+There's a reflex most people bring to AI tools: they think in terms of *asking questions*. What's the right question to ask? How do I phrase it? That framing makes sense for a search engine. It's a handicap with Claude.
+
+The better mental model is this: Claude is a senior engineer who can read fast, synthesize well, and reason carefully — but who walked in the door this morning knowing nothing about your assets. Your job isn't to ask the perfect question. Your job is to brief them properly. And in E&P, you have years of documents that do exactly that.
+
+## The documents you're sitting on
+
+Most operating teams are drowning in their own paper. Completion reports. AFE packages with supporting geology exhibits. End-of-well reports with lessons-learned sections that nobody reads six months later. Daily drilling reports archived by well. Production allocation summaries. Workover justifications. Reservoir engineering studies.
+
+Every one of these is a context load. And because they were written by people who knew your operation — your formation names, your offset analogs, your cost structure, your vendor relationships — they carry specificity that no generic prompt can replicate.
+
+When you bring a completion report into the context window alongside your question, Claude isn't reading a generic template. It's reading *your* Bone Spring Third Sand, with your actual cluster spacing, your actual fluid volumes, your actual sand concentration. The answer it gives back reflects that.
+
+## What this looks like in practice
+
+Say you're evaluating whether to try a longer lateral in a section where you've historically drilled 7,500-foot wells. You have four existing well files — end-of-well reports, completion reports, initial production summaries. Don't start with an open-ended question about lateral length optimization. Start by uploading those four documents. Then ask: *Based on these wells, what would you expect to change in the completion design and costs if we extended laterals to 10,000 feet?*
+
+Now Claude is reasoning from your actual data. It can see that your proppant intensity has been running at a certain pounds-per-foot, that your IP30s have followed a particular trend, that your AFE cost-per-foot has been consistent. It can flag that your previous completions were constrained by surface treating pressure and ask whether that's still a factor. It can point out that your stage count math doesn't scale linearly and suggest how you might think about cluster spacing on the longer interval.
+
+That's not a magic trick. That's just giving it your documents.
+
+## Prior work compounds
+
+One underappreciated dynamic: when you paste in a prior summary or analysis — even one Claude helped you write in a previous session — you're giving it a compressed, already-synthesized version of a larger body of work. A good well summary that took an hour to produce becomes a 400-word reference document that you can drop into any future conversation.
+
+This is how the value compounds. Each piece of work product you generate becomes reusable context for the next question. The workover justification you wrote for a pump failure becomes the reference document when a similar failure happens six months later on an offset well. You don't start from scratch — you paste the prior case and ask what's different this time.
+
+## What to curate, and what to leave out
+
+Not every document belongs in every conversation. A drilling report from a well in a different zone three counties over is noise, not signal. Dropping in fifty pages of tangentially related material dilutes the context and can pull answers in the wrong direction.
+
+The discipline is editorial. Ask yourself: if I were briefing a sharp consultant who had two hours to get up to speed, which documents would I hand them? That's your context load. Usually it's three to five documents, not twenty. The formation overview that gives the structural picture. The offset well file most analogous to the decision at hand. The current well's status summary. The specific question you're trying to answer.
+
+That's the brief. Documents first, question second. The prompt is almost the last thing you write — because by the time you've assembled the right documents, the question usually becomes obvious.

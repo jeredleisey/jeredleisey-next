@@ -9,3 +9,53 @@ Most people using Claude treat it like Google. They type a short question and ex
 The tool isn't limited. The prompts are.
 
 This lesson is about why the quality of your input determines the quality of your output, and what that means for the kind of work we do in E&P.
+
+## Claude is a reasoning engine, not a retrieval engine
+
+Google finds documents that match your query. Claude reasons about the information you give it. That's a fundamental difference.
+
+When you ask Google "Permian Basin completion trends," it finds pages that contain those words. When you ask Claude the same thing, it tries to answer from its training data — which may be outdated, incomplete, or wrong about your specific play.
+
+But when you paste in your last ten completion reports and ask Claude to identify trends, something useful happens. It reads everything you gave it, reasons across the data, and produces an answer grounded in your actual well history.
+
+The key insight: Claude's quality is bounded by your input quality. Garbage in, garbage out — but also: excellent input, excellent output.
+
+## Why this matters in E&P specifically
+
+Upstream work is context-heavy. Every well has a story. A Wolfcamp B completion in the Delaware Basin isn't the same as a Wolfcamp B in the Midland Basin. An AFE for a 10,000-foot lateral isn't comparable to one for a 7,500-foot lateral. The details matter.
+
+Claude doesn't know your basin, your operator, your completion design philosophy, or your cost environment unless you tell it. When you leave that context out, Claude fills the gap with generalities. The output sounds plausible but isn't useful.
+
+When you include that context, Claude can reason about it the way a smart analyst would — connecting the specific details you've provided to produce something actually actionable.
+
+## The difference between a bad prompt and a good one
+
+Here's a bad prompt:
+
+> "Summarize this well."
+
+Here's a better one:
+
+> "You are summarizing a Permian Basin horizontal well for a non-technical executive audience. The audience cares about EUR estimate, 30-day IP rate, completion cost per foot, and how this well compares to the type curve. Here is the completion report: [paste report]. Summarize in four bullet points, one for each metric."
+
+The second prompt is longer. It takes thirty more seconds to write. The output is dramatically better — and you can reuse the structure on every well summary you need to produce this month.
+
+That's the core trade-off in prompting: a little more investment upfront, a lot more value out the other side.
+
+## Three levers you control
+
+Every prompt has three things you can tune:
+
+**Context** — What does Claude need to know to answer well? Your role, the well's characteristics, the audience for the output, any constraints.
+
+**Instruction** — What exactly do you want Claude to do? Summarize, compare, flag anomalies, rewrite, extract data, draft a memo.
+
+**Format** — How do you want the output structured? Bullet points, a table, a narrative paragraph, a numbered list, JSON.
+
+In the next two lessons, you'll see how these three levers work together on a specific task: writing well summary prompts and assembling the right reference material before you prompt.
+
+## The takeaway
+
+Claude isn't a magic box that produces results from vague inputs. It's a powerful reasoning tool that rewards clear, specific, context-rich prompts. In E&P, where context is everything and the cost of a bad answer is real, that investment in prompt quality pays off every time.
+
+Start treating every prompt as a brief. The more clearly you brief Claude, the better it works.
