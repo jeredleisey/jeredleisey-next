@@ -21,7 +21,9 @@ export default {
         },
       },
       fontFamily: {
-        'neue-montreal': ['Neue-Montreal', 'sans-serif'],
+        'neue-montreal': ['Neue-Montreal', 'system-ui', 'sans-serif'],
+        sans: ['Neue-Montreal', 'system-ui', 'sans-serif'],
+        serif: ['Newsreader', 'Georgia', 'serif'],
       },
       spacing: {
         'pad-2': 'max(20px, 4vmin)',
