@@ -6,7 +6,7 @@ export function Preface({ children }: { children: ReactNode }) {
       <p className="text-[11px] tracking-[0.18em] uppercase text-my-walnut dark:text-my-stone mb-2.5">
         Preface
       </p>
-      <div className="text-lg leading-relaxed text-my-espresso dark:text-my-cream [&>p]:mb-3 [&>p:last-child]:mb-0">
+      <div className="font-serif text-lg leading-[1.7] text-my-espresso dark:text-my-cream [&>p]:mb-3 [&>p:last-child]:mb-0">
         {children}
       </div>
     </section>

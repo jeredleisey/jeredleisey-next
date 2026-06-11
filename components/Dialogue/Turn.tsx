@@ -21,7 +21,7 @@ export function Turn({ who, children }: { who: string; children: ReactNode }) {
           {who}
         </span>
       </div>
-      <div className="text-[17px] leading-relaxed text-my-espresso dark:text-my-cream max-w-[60ch] [&>p]:mb-3.5 [&>p:last-child]:mb-0 [&_em]:italic [&_strong]:font-semibold [&_strong]:text-my-espresso dark:[&_strong]:text-my-cream">
+      <div className="font-serif text-[18px] leading-[1.7] text-my-espresso dark:text-my-cream max-w-[62ch] [&>p]:mb-3.5 [&>p:last-child]:mb-0 [&_em]:italic [&_strong]:font-semibold [&_strong]:text-my-espresso dark:[&_strong]:text-my-cream">
         {body}
       </div>
       {note && <div>{note}</div>}

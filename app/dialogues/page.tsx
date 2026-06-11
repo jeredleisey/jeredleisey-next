@@ -37,7 +37,7 @@ export default function DialoguesPage() {
                 </span>
               </div>
               <div className="sm:text-right">
-                <span className="block text-my-espresso dark:text-my-cream text-xs uppercase tracking-wide font-medium">
+                <span className="block text-my-espresso dark:text-my-cream text-xs uppercase tracking-wide font-semibold">
                   {d.metadata.model}
                 </span>
                 <span className="block mt-1 text-my-walnut/50 dark:text-my-stone/50 text-xs uppercase">

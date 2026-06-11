@@ -2,6 +2,7 @@ import { notFound } from 'next/navigation';
 import { MDXRemote } from 'next-mdx-remote/rsc';
 import { getEssay, getAllEssays } from '@/lib/content';
 import { formatDate } from '@/lib/utils';
+import { proseClasses } from '@/lib/proseClasses';
 
 export async function generateStaticParams() {
   return getAllEssays().map((e) => ({ essay: e.slug }));
@@ -39,13 +40,7 @@ export default async function EssayPage({ params }: { params: Promise<{ essay: s
         </h1>
       </div>
 
-      <div className="prose prose-sm max-w-none
-        prose-headings:font-light prose-headings:text-my-espresso dark:prose-headings:text-my-cream
-        prose-p:text-my-walnut dark:prose-p:text-my-stone prose-p:leading-relaxed
-        prose-a:text-my-orange prose-a:no-underline hover:prose-a:text-my-espresso dark:hover:prose-a:text-my-cream
-        prose-strong:text-my-espresso dark:prose-strong:text-my-cream prose-strong:font-normal
-        prose-code:text-my-amber prose-code:bg-my-stone/20 dark:prose-code:bg-my-espresso/50 prose-code:px-1 prose-code:rounded
-        prose-pre:bg-my-stone/20 dark:prose-pre:bg-my-espresso/50 prose-pre:border prose-pre:border-my-stone/30 dark:prose-pre:border-my-espresso/30">
+      <div className={proseClasses}>
         <MDXRemote source={essay.content} />
       </div>
     </div>
