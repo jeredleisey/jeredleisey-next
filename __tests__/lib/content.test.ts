@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import path from 'path';
-import { getAllSeries, getSeries, getLesson, getAllProjects, getProject, getAllEssays, getEssay } from '@/lib/content';
+import { getAllSeries, getSeries, getLesson, getAllProjects, getProject, getAllEssays, getEssay, getAllDialogues, getDialogue } from '@/lib/content';
 
 const FIXTURES = path.join(__dirname, '../fixtures/content');
 
@@ -123,5 +123,40 @@ describe('getEssay', () => {
 
   it('returns null for unknown slug', () => {
     expect(getEssay('no-such-essay', FIXTURES)).toBeNull();
+  });
+});
+
+describe('getAllDialogues', () => {
+  it('returns dialogues sorted by date descending', () => {
+    const dialogues = getAllDialogues(FIXTURES);
+    expect(dialogues).toHaveLength(2);
+    expect(dialogues[0].slug).toBe('test-dialogue');
+    expect(dialogues[1].slug).toBe('older-dialogue');
+  });
+
+  it('exposes the model on each summary', () => {
+    const dialogues = getAllDialogues(FIXTURES);
+    expect(dialogues[0].metadata.model).toBe('Fable 5');
+  });
+});
+
+describe('getDialogue', () => {
+  it('returns content and metadata', () => {
+    const dialogue = getDialogue('test-dialogue', FIXTURES);
+    expect(dialogue).not.toBeNull();
+    expect(dialogue!.metadata.title).toBe('Test Dialogue');
+    expect(dialogue!.metadata.summary).toContain('test conversation');
+    expect(dialogue!.content).toContain('<Turn who="Jered">');
+  });
+
+  it('loads a bare dialogue with no annotations', () => {
+    const dialogue = getDialogue('older-dialogue', FIXTURES);
+    expect(dialogue).not.toBeNull();
+    expect(dialogue!.content).toContain('<Turn who="Jered">');
+    expect(dialogue!.content).not.toContain('<Note>');
+  });
+
+  it('returns null for unknown slug', () => {
+    expect(getDialogue('no-such-dialogue', FIXTURES)).toBeNull();
   });
 });
