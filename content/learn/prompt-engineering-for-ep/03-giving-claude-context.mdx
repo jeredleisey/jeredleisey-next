@@ -1,0 +1,81 @@
+---
+title: "Giving Claude the context it needs"
+order: 3
+description: "How to assemble the right reference material before you prompt — and why the right context window beats the perfect instruction every time."
+---
+
+You can write a perfect instruction and still get a mediocre answer. The most common reason: Claude doesn't have the right information to reason from.
+
+This lesson is about the other half of prompt quality — not what you ask Claude to do, but what you give it to work with.
+
+## Claude only knows what you tell it
+
+Claude has broad general knowledge from its training. It knows what a completion report looks like. It understands production decline curves. It can discuss typical Permian Basin completion costs in general terms.
+
+What it doesn't know: your specific wells, your operator's completion philosophy, your type curve assumptions, your AFE benchmarks, your basin's current cost environment, or anything proprietary to your company.
+
+Every time you prompt Claude without providing that context, it fills the gap with generalities. The output may sound right. It may not be right for your situation.
+
+The fix is straightforward: bring the relevant documents into the prompt.
+
+## What "context" means in practice
+
+Context is anything Claude needs to read before it can answer your question accurately. For E&P work, common context includes:
+
+- **Completion reports** -- raw data, stage-by-stage breakdowns, treating pressures, fluid and proppant volumes
+- **Production data** -- monthly volumes, decline curves, lift method changes
+- **Type curve assumptions** -- what your team expects from a well in this formation and landing zone
+- **Previous summaries or reports** -- so Claude can compare rather than describe in isolation
+- **AFE line items** -- when you want cost analysis or anomaly detection
+- **Offset well data** -- for comparison or benchmarking
+
+You don't need all of these every time. You need the specific documents that are relevant to the question you're asking.
+
+## Assemble before you prompt
+
+The most common workflow mistake is typing a question first and then wondering why the answer isn't useful. Flip the order.
+
+Before you open Claude, ask yourself: what would a sharp analyst need to read before answering this question? Then gather those documents and paste them in.
+
+A practical example. Say you want to understand why Well A underperformed against type curve. Before prompting, gather:
+
+1. The completion report for Well A
+2. Your type curve for that formation
+3. The completion reports for two or three offset wells that hit type curve
+
+Now your prompt has something to reason across. Claude can compare actual stage performance against the type curve, look at where Well A diverged, and surface hypotheses. Without those documents, it can only give you generic reasons why wells underperform -- which you already know.
+
+## Be explicit about what each document is
+
+When you paste multiple documents into a single prompt, label them clearly. Claude is good at parsing structure, but ambiguity wastes tokens and occasionally causes confusion.
+
+Use simple headers:
+
+> **TYPE CURVE -- Wolfcamp B, Midland Basin, 10,000 ft lateral**
+> [paste type curve data]
+>
+> **COMPLETION REPORT -- Well A (API 42-317-XXXXX)**
+> [paste completion report]
+>
+> **COMPLETION REPORT -- Well B (API 42-317-YYYYY)**
+> [paste completion report]
+
+Then follow with your instruction. The labeling makes it easy for Claude to reference specific documents in its answer, and it makes it easy for you to audit what you sent.
+
+## Know what context to leave out
+
+More context is not always better. Pasting an entire 200-page drilling program when you only need the completion section adds noise and can dilute Claude's focus. Trim to what's relevant.
+
+A good rule of thumb: if you wouldn't hand a document to a human analyst to inform their answer, don't paste it into Claude. Relevance beats volume.
+
+If you're unsure what's relevant, you can ask Claude. Paste the documents you have and say: "I want to understand X. Which of these documents are most relevant to that question?" It will tell you.
+
+## The context-instruction pairing
+
+Lessons 1 and 2 established the three-part prompt structure: context, instruction, format. This lesson expands what "context" actually means in practice. It's not just a sentence orienting Claude to your role -- it's the actual source material Claude will reason from.
+
+The better your source material, the better the reasoning. That's true of human analysts and it's true of Claude.
+
+## The takeaway
+
+Prompting well isn't only about writing a clear instruction. It's about showing up with the right documents. Before you prompt, ask what a good analyst would need to read. Assemble that material, label it clearly, and paste it in. The quality of your output is bounded by the quality of what you bring to the prompt.

@@ -9,3 +9,70 @@ A well summary prompt has three parts: context, instruction, and format.
 Skip any one of them and you get a different kind of failure. Skip context and Claude invents details. Skip instruction and you get prose when you wanted a table. Skip format and every summary looks different.
 
 Here's how to get all three right.
+
+## Start with context
+
+Before you give Claude a task, tell it what it's working with. For a well summary, that means:
+
+- The play and formation (Wolfcamp A, Bone Spring, Haynesville)
+- The lateral length and completion type if relevant
+- Who the summary is for — your asset team, an executive, a JV partner
+- Any specific concerns or things the reader will ask about
+
+You don't need a paragraph. A few sentences is enough. The goal is to eliminate the vagueness that forces Claude to make assumptions.
+
+**Weak context:**
+> "Summarize this completion report."
+
+**Strong context:**
+> "This is a Delaware Basin Bone Spring 3 horizontal well with an 8,500-foot lateral. The summary is for our VP of Operations who wants to understand performance against type curve and flag any completion anomalies. Here is the report:"
+
+The second version takes ten seconds longer to write and produces a fundamentally different output.
+
+## Give a clear instruction
+
+Once Claude knows what it's working with, tell it what to do. Be specific about the task — not just "summarize" but what kind of summary.
+
+Good instructions are action-oriented. Some examples:
+
+- "Write a four-bullet executive summary covering IP30, EUR estimate, completion cost per foot, and type curve comparison."
+- "Extract the following data points as a table: spud date, TD date, lateral length, total fluid pumped, total proppant, IP30, IP90."
+- "Identify any stages where treating pressure exceeded 9,000 psi and explain what that might indicate."
+
+The more specific your instruction, the more the output matches what you actually need. Vague instructions produce outputs that are technically responsive but not quite right — forcing you to go back and forth with follow-up prompts.
+
+## Specify the format
+
+Format matters more than most people realize. The same information structured differently is more or less useful depending on how it gets used.
+
+If your summary ends up in a PowerPoint, you want bullets. If it feeds into a spreadsheet, you want a table. If it goes into a drilling report, you want a paragraph with specific terminology.
+
+Tell Claude explicitly:
+
+- "Use a table with columns for: metric, actual, type curve, variance."
+- "Format as five bullet points, each under 20 words."
+- "Write one paragraph of prose, no lists."
+
+Claude will default to something reasonable if you don't specify — but "reasonable" often isn't what you need. Take ten seconds to define the format and you'll spend zero time reformatting the output.
+
+## Putting it together: a full well summary prompt
+
+Here's what a complete prompt looks like assembled:
+
+> You are helping an E&P reservoir engineer summarize a completion report for a weekly asset team meeting. The audience is technical but time-constrained. This well is a Midland Basin Wolfcamp B horizontal, 10,200-foot lateral, drilled by Operator X.
+>
+> Summarize the following completion report in a table with five rows: IP30 (BOEPD), IP90 (BOEPD), EUR estimate (MBOE), completion cost per foot ($/ft), and any notable completion anomalies. In the anomalies row, note "None" if there are none. Keep language direct and factual.
+>
+> [paste completion report here]
+
+That's it. Context, instruction, format. You can adapt this template to any well, any formation, any audience in under two minutes.
+
+## Build a prompt library
+
+Once you've written a prompt that works, save it. Most E&P teams run the same workflows repeatedly — well summaries, AFE comparisons, production anomaly reviews. A prompt that works well for one Bone Spring completion will work for the next ten with minor edits.
+
+Keep a shared document or folder with your team's best prompts. Label each one with the use case. This is the beginning of a repeatable workflow — which is what the 201-level series in this curriculum covers in depth.
+
+## The takeaway
+
+A well summary prompt isn't magic — it's a template with three slots: context, instruction, format. Fill all three slots and you get consistent, useful output. Leave any slot empty and you're leaving results to chance. Build the habit of filling all three and you'll produce better summaries faster than you ever did manually.

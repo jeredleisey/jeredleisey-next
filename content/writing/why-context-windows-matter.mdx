@@ -7,3 +7,35 @@ description: "Everyone optimizes the prompt. Almost nobody thinks about what els
 Everyone focuses on the prompt. The prompt is the instruction. But the context window is the workspace — it's everything Claude can see at once.
 
 Most people using Claude in E&P are filling maybe 10% of it. The other 90% is available, and using it well is the difference between a generic answer and one that actually fits your situation.
+
+## What "context window" actually means
+
+Claude doesn't have memory between conversations. Every time you start a session, its knowledge resets to what it was trained on — and that training has a cutoff. It knows how to read a completion report. It doesn't know *yours*. The context window is how you bridge that gap. It's the totality of text Claude can reason over in a single exchange: your prompt, any documents you paste in, previous turns in the conversation, and any instructions you've set. Current models can hold hundreds of thousands of tokens — easily enough for a full well file, an AFE with supporting exhibits, or several months of daily drilling reports side by side.
+
+The practical implication is simple: Claude is only as good as what you give it to work with. If you hand it a blank prompt and ask it to summarize the issues on your Wolfcamp B well, you'll get generalities. If you hand it the last thirty days of morning reports alongside the directional survey and the mud logs, you'll get a specific, actionable answer.
+
+## The blank-page mistake
+
+Here's the pattern I see constantly. Someone pastes a short question — "What do you think about our completion design?" — and Claude produces a response that's technically accurate but useless because it's divorced from any actual well. The problem isn't the model. The problem is that Claude was handed a blank page and asked to paint a picture.
+
+Compare that to uploading the actual completion report, the offset analog you're referencing, and a brief note on what decision you're trying to make. Suddenly the answer is specific to your formation thickness, your fluid system, your cluster spacing. Claude can tell you whether your stage count is consistent with what the offset is doing, or flag that your pump rate assumptions don't match the treating pressures that actually showed up on the offset frac job.
+
+That's not a smarter prompt. That's a fuller context window.
+
+## Documents are your leverage
+
+In E&P, you're surrounded by documents that carry enormous implicit context: AFEs with cost category breakdowns, geosteering decisions logs, end-of-well reports, production allocation summaries. Most of this sits in shared drives unread by anyone except the engineer who wrote it.
+
+When you bring those documents into the context window, you're not just giving Claude information — you're giving it the shared vocabulary of your operation. It learns your formation names, your well naming conventions, your cost codes. A question like "why did this well come in under AFE?" becomes answerable when the AFE, the cost tracker, and the daily drilling reports are all present. Without them, you get a list of general reasons wells come in under budget. With them, you get a finding that your casing-to-TD stage was $180K lighter than authorized because you drilled faster than projected and saved a day of rig time.
+
+## Context degrades if you ignore it
+
+There's a flip side worth knowing. Context windows are sequential — what comes first shapes how Claude weighs what comes later. If you dump in a long irrelevant document before your actual question, you've diluted your signal. If you paste in conflicting data without flagging the conflict, Claude may reconcile it in ways you didn't intend.
+
+The discipline is curation, not accumulation. Put in what's relevant. Put it in an order that mirrors how you'd brief a competent colleague who just walked in the room. Formation overview, well status, the specific question. That structure matters.
+
+## The unlock hiding in plain sight
+
+Most teams aren't bottlenecked on Claude's capabilities. They're bottlenecked on how little of those capabilities they're actually reaching. The context window is the unlock — and unlike prompting tricks or fine-tuned models, it requires nothing more than pasting in documents you already have.
+
+The engineers who get genuinely useful answers from Claude aren't doing anything exotic. They're just giving it enough to work with.
