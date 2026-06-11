@@ -17,12 +17,13 @@ describe('GlobalNav', () => {
     expect(screen.getByText('Jered Leisey')).toBeInTheDocument();
   });
 
-  it('renders all four nav links', () => {
+  it('renders all five nav links', () => {
     render(<GlobalNav />, { wrapper });
     expect(screen.getByRole('link', { name: 'Home' })).toBeInTheDocument();
     expect(screen.getByRole('link', { name: 'Learn' })).toBeInTheDocument();
     expect(screen.getByRole('link', { name: 'Projects' })).toBeInTheDocument();
     expect(screen.getByRole('link', { name: 'Writing' })).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Dialogues' })).toBeInTheDocument();
   });
 
   it('highlights the active section in orange', () => {
