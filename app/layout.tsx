@@ -2,7 +2,7 @@ import type { Metadata } from 'next';
 import './globals.css';
 import { Sidebar } from '@/components/Sidebar';
 import { ThemeProvider } from '@/components/ThemeProvider';
-import { getAllSeries, getAllProjects, getAllEssays } from '@/lib/content';
+import { getAllSeries, getAllProjects, getAllEssays, getAllDialogues } from '@/lib/content';
 
 export const metadata: Metadata = {
   title: 'Jered Leisey',
@@ -20,6 +20,7 @@ export default async function RootLayout({
   const allSeries = getAllSeries();
   const allProjects = getAllProjects();
   const allEssays = getAllEssays();
+  const allDialogues = getAllDialogues();
 
   return (
     <html lang="en" className="h-full">
@@ -29,6 +30,7 @@ export default async function RootLayout({
             allSeries={allSeries}
             allProjects={allProjects}
             allEssays={allEssays}
+            allDialogues={allDialogues}
           />
           <main className="flex-1 overflow-y-auto">
             {children}
