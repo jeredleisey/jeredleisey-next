@@ -14,6 +14,9 @@ import type {
   ProjectPage,
   LessonRef,
   EssayPage,
+  DialogueMetadata,
+  DialogueSummary,
+  DialoguePage,
 } from './types';
 
 const DEFAULT_CONTENT_DIR = path.join(process.cwd(), 'content');
@@ -189,4 +192,36 @@ export function getEssay(
 
   const { data, content } = readMdx(filePath);
   return { slug, metadata: data as EssayMetadata, content };
+}
+
+// ── dialogues ───────────────────────────────────────────────────────────────
+
+export function getAllDialogues(contentDir = DEFAULT_CONTENT_DIR): DialogueSummary[] {
+  const dialoguesDir = path.join(contentDir, 'dialogues');
+  if (!fs.existsSync(dialoguesDir)) return [];
+  return fs
+    .readdirSync(dialoguesDir)
+    .filter((f) => f.endsWith('.mdx'))
+    .map((filename) => {
+      const { data } = readMdx(path.join(dialoguesDir, filename));
+      return {
+        slug: filename.replace(/\.mdx$/, ''),
+        metadata: data as DialogueMetadata,
+      };
+    })
+    .sort(
+      (a, b) =>
+        new Date(b.metadata.date).getTime() - new Date(a.metadata.date).getTime(),
+    );
+}
+
+export function getDialogue(
+  slug: string,
+  contentDir = DEFAULT_CONTENT_DIR,
+): DialoguePage | null {
+  const filePath = path.join(contentDir, 'dialogues', `${slug}.mdx`);
+  if (!fs.existsSync(filePath)) return null;
+
+  const { data, content } = readMdx(filePath);
+  return { slug, metadata: data as DialogueMetadata, content };
 }

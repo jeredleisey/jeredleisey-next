@@ -9,6 +9,7 @@ const NAV_ITEMS = [
   { label: 'Learn', href: '/learn' },
   { label: 'Projects', href: '/projects' },
   { label: 'Writing', href: '/writing' },
+  { label: 'Dialogues', href: '/dialogues' },
 ] as const;
 
 export function GlobalNav() {

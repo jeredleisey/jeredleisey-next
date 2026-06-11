@@ -78,3 +78,21 @@ export interface EssayPage {
   metadata: EssayMetadata;
   content: string;
 }
+
+export interface DialogueMetadata {
+  title: string;
+  model: string; // e.g. "Fable 5", "Opus 4.8"
+  date: string; // ISO date string
+  summary: string;
+}
+
+export interface DialogueSummary {
+  slug: string;
+  metadata: DialogueMetadata;
+}
+
+export interface DialoguePage {
+  slug: string;
+  metadata: DialogueMetadata;
+  content: string; // raw MDX without frontmatter
+}
