@@ -30,6 +30,14 @@ export default {
         'pad-2': 'max(20px, 4vmin)',
         'pad-4': 'max(40px, 8vmin)',
       },
+      typography: {
+        DEFAULT: {
+          css: {
+            'code::before': { content: 'none' },
+            'code::after': { content: 'none' },
+          },
+        },
+      },
     },
   },
   plugins: [typography],
