@@ -1,0 +1,117 @@
+---
+title: "Calling Python from Power Automate via Azure Functions"
+date: "2026-06-13"
+description: "An HTTP-triggered Azure Function lets Power Automate run arbitrary Python logic against a SharePoint file — no VM, no unattended desktop bot."
+lessons: []
+---
+
+The goal was simple: when a PDF lands in a SharePoint library, count its pages and make that number available to the rest of the flow. What made it interesting is how to get there without a VM.
+
+Power Automate Desktop can run Python. But Desktop flows run on a machine — which means a machine has to be on, logged in, and licensed for unattended automation. For something as lightweight as reading a PDF, that's a lot of infrastructure to keep alive.
+
+The alternative: an HTTP-triggered Azure Function. Power Automate calls it over HTTP. Python runs in a serverless environment. No machine, no session, no unattended license.
+
+## The Architecture
+
+Three pieces:
+
+1. **SharePoint** holds the PDF, dropped into a document library
+2. **Power Automate** monitors the library, retrieves the file bytes, and calls the function
+3. **Azure Function** receives the bytes, counts pages with `pypdf`, and returns JSON
+
+The only connection between Power Automate and the function is an HTTP POST. That simplicity is the point.
+
+## The Function
+
+Python 3.11, Azure Functions runtime v4, Linux consumption plan. One route: `POST /api/pagecount`.
+
+The function expects a JSON body with a single field — the PDF as a base64 string. It decodes the bytes, hands them to `pypdf`, and returns the count:
+
+```python
+import base64
+import io
+import json
+import logging
+
+import azure.functions as func
+from pypdf import PdfReader
+
+app = func.FunctionApp(http_auth_level=func.AuthLevel.FUNCTION)
+
+@app.route(route="pagecount")
+def pagecount(req: func.HttpRequest) -> func.HttpResponse:
+    try:
+        body = req.get_json()
+    except ValueError:
+        return func.HttpResponse(
+            json.dumps({"error": "body must be JSON"}),
+            status_code=400,
+            mimetype="application/json",
+        )
+    b64 = body.get("pdf_base64") if body else None
+    if not b64:
+        return func.HttpResponse(
+            json.dumps({"error": "missing pdf_base64"}),
+            status_code=400,
+            mimetype="application/json",
+        )
+    try:
+        data = base64.b64decode(b64)
+        page_count = len(PdfReader(io.BytesIO(data)).pages)
+        return func.HttpResponse(
+            json.dumps({"pageCount": page_count}),
+            mimetype="application/json",
+            status_code=200,
+        )
+    except Exception:
+        logging.exception("pagecount failed")
+        return func.HttpResponse(
+            json.dumps({"error": "could not read PDF"}),
+            status_code=422,
+            mimetype="application/json",
+        )
+```
+
+`pypdf` is pure Python — no system dependencies, no poppler, no ghostscript. It reads PDF structure from bytes in memory, which is a good fit for a serverless environment where you can't install OS-level packages.
+
+Authentication uses `AuthLevel.FUNCTION` — a function key passed as the `x-functions-key` header on every request. The v2 programming model sets this at the app level via the `FunctionApp` constructor, not in per-function config files.
+
+## The Power Automate Flow
+
+Four actions after the trigger.
+
+**Trigger:** SharePoint — "When a file is created (properties only)." Note the name: the trigger payload contains metadata (file name, ID, path) but not the file bytes. Content is always fetched separately.
+
+**1. Condition — filter for PDFs.** Check that the file name ends with `.pdf`. If not, terminate. Without this, any file dropped into the library — a Word doc, an image — hits the function and comes back as a 422.
+
+**2. Get file content.** SharePoint connector, "Get file content" action. Takes the file identifier from the trigger and returns the raw bytes, already base64-encoded in a field called `$content`. SharePoint does this encoding automatically; no extra step needed in the flow.
+
+**3. HTTP — call the function.** POST to the function URL with the `x-functions-key` header. The body:
+
+```json
+{"pdf_base64": "@{body('Get_file_content')?['$content']}"}
+```
+
+That expression pulls the base64 string directly from the previous action's output. No encoding step, no transformation.
+
+**4. Parse JSON.** Parses the HTTP response body against a schema expecting `{"pageCount": integer}`. After this step, `pageCount` is a named dynamic content variable available to subsequent actions in the flow.
+
+## Gotchas
+
+**The trigger doesn't give you the file.** "Properties only" is intentional — Power Automate doesn't include binary content in trigger payloads. You always need the separate "Get file content" action. This trips up most people the first time.
+
+**Key rotation on publish.** Running `func azure functionapp publish` can regenerate function keys. A key fetched before the deploy may be invalid after. Fetch the key again after every publish — the Azure portal or `az functionapp keys list` both work.
+
+**Python version.** Azure Functions runtime v4 supports Python 3.10, 3.11, and 3.12 — not 3.13. If your local machine runs 3.13 (common with recent Homebrew installs on macOS), create the venv explicitly with a 3.11 binary. The remote build uses the runtime version configured in Azure regardless of what's local, but `func start` for local testing requires the versions to match.
+
+**The HTTP connector is premium.** The HTTP action in Power Automate requires a premium license. The SharePoint connector and built-in actions are standard. This pattern won't work on a free Power Automate plan.
+
+**v2 programming model.** The function uses routes registered with `@app.route` decorators on a `FunctionApp` instance — no `function.json` files. Most tutorials still show the older v1 model. The project structure looks different from what you'll find in most search results.
+
+## What This Unlocks
+
+The page count was a proof of concept. The pattern is what matters.
+
+Anything Power Automate can't do natively but Python can — parsing document structure, running a calculation, calling an API with a non-standard auth flow, processing a file format Power Automate has no connector for — can be wrapped in an HTTP-triggered Azure Function and called from any flow. The integration point is just an HTTP POST with a JSON body. Power Automate handles the connector orchestration; Python handles the logic.
+
+The alternative is Power Automate Desktop running on a machine you have to keep alive and licensed. For file processing where the file is already in SharePoint, a serverless function is strictly better: cheaper, zero maintenance surface, and available without keeping anything on.
