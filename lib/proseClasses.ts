@@ -10,6 +10,8 @@ export const proseClasses = [
   'prose-p:text-my-walnut dark:prose-p:text-my-stone prose-p:leading-[1.7]',
   'prose-li:text-my-walnut dark:prose-li:text-my-stone',
   'prose-strong:text-my-espresso dark:prose-strong:text-my-cream prose-strong:font-semibold',
+  'prose-blockquote:text-my-walnut dark:prose-blockquote:text-my-stone prose-blockquote:border-my-stone/40 dark:prose-blockquote:border-my-espresso/40',
+  'prose-hr:border-my-stone/30 dark:prose-hr:border-my-espresso/30',
   // links
   'prose-a:text-my-orange prose-a:no-underline hover:prose-a:text-my-espresso dark:hover:prose-a:text-my-cream',
   // code stays monospace, not serif
