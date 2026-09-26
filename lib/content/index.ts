@@ -4,3 +4,5 @@
 export { ContentError } from './frontmatter';
 export { getPost, getPosts } from './posts';
 export type { Post, PostOptions } from './posts';
+export { getUpdate, getUpdates } from './updates';
+export type { Update, UpdateOptions } from './updates';
