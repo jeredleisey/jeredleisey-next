@@ -6,6 +6,11 @@ import { ThemeProvider } from '@/components/ThemeProvider';
 let pathname = '/';
 vi.mock('next/navigation', () => ({
   usePathname: () => pathname,
+  useRouter: () => ({ refresh: vi.fn() }),
+}));
+
+vi.mock('@/lib/auth-client', () => ({
+  authClient: { useSession: () => ({ data: null, isPending: false }), signOut: vi.fn() },
 }));
 
 function renderSidebar() {
