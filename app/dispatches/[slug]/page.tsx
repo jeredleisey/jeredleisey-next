@@ -24,6 +24,25 @@ export async function generateMetadata({ params }: Props) {
   return { title: `${post.title} — Jered Leisey`, description: post.description };
 }
 
+// One facet of a Post as small tags. Each tag links to the Dispatches list filtered by it.
+function FacetTags({ label, param, values }: { label: string; param: string; values: string[] }) {
+  if (values.length === 0) return null;
+  return (
+    <p className="mt-3 flex flex-wrap items-baseline gap-2 text-xs text-my-walnut dark:text-my-stone">
+      <span className="uppercase tracking-widest">{label}</span>
+      {values.map((value) => (
+        <Link
+          key={value}
+          href={`/dispatches?${new URLSearchParams({ [param]: value })}`}
+          className="border border-my-stone/40 dark:border-my-stone/20 px-2 py-0.5 font-light hover:border-my-orange hover:text-my-orange transition-colors"
+        >
+          {value}
+        </Link>
+      ))}
+    </p>
+  );
+}
+
 export default async function PostPage({ params }: Props) {
   const { slug } = await params;
   const post = getPost(slug, { includeDrafts });
@@ -48,6 +67,9 @@ export default async function PostPage({ params }: Props) {
             </Link>
           </p>
         )}
+        <FacetTags label="Topics" param="topic" values={post.topics} />
+        <FacetTags label="Audience" param="audience" values={post.audience} />
+        <FacetTags label="Use cases" param="useCase" values={post.useCases} />
       </div>
 
       <div className={proseClasses}>
