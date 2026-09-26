@@ -164,6 +164,22 @@ describe('Jev Run module', () => {
         questions: { q: { type: 'score', instructions: 'x', criteria: [] } },
       },
     ],
+    [
+      'a noul question with only true criteria',
+      { ...INPUT, questions: { q: { type: 'noul', instructions: 'x', criteria: { true: 'Yes' } } } },
+    ],
+    [
+      'a noul question with only false criteria',
+      { ...INPUT, questions: { q: { type: 'noul', instructions: 'x', criteria: { true: ' ', false: 'No' } } } },
+    ],
+    [
+      'noul criteria that are not an object',
+      { ...INPUT, questions: { q: { type: 'noul', instructions: 'x', criteria: 'yes' } } },
+    ],
+    [
+      'a score question with a blank level',
+      { ...INPUT, questions: { q: { type: 'score', instructions: 'x', criteria: ['Calm', '  '] } } },
+    ],
     ['a body that is not an object', 'hello'],
   ])(
     'refuses input with %s before any OpenRouter call',
