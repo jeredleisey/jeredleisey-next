@@ -168,6 +168,20 @@ describe('Access Requests', () => {
     expect(past[0].roleName).toBe('Colleagues');
   });
 
+  it('reports an unknown Role instead of an approval, and keeps the request pending', async () => {
+    const { db, access } = await setup();
+    const u = await createUser(db);
+    const sent = await access.requestAccess(u, 'jev');
+    if (!sent.ok) throw new Error('request refused');
+    for (const roleId of ['not-a-role-id', '00000000-0000-4000-8000-000000000000']) {
+      expect(await access.approve(sent.requestId, roleId)).toEqual({
+        ok: false,
+        reason: 'role-not-found',
+      });
+    }
+    expect(await access.accessFor(u, 'jev')).toEqual({ status: 'pending' });
+  });
+
   it('refuses a request from a User who already has access', async () => {
     const { db, access } = await setup();
     const admin = await createUser(db, { email: ADMIN_EMAIL });
