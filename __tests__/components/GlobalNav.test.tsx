@@ -31,6 +31,12 @@ describe('GlobalNav', () => {
     }
   });
 
+  it('shows About', () => {
+    render(<GlobalNav />, { wrapper });
+    const nav = screen.getByRole('navigation', { name: 'Site navigation' });
+    expect(within(nav).getByRole('link', { name: 'About' })).toHaveAttribute('href', '/about');
+  });
+
   it('highlights the section of the current page', () => {
     render(<GlobalNav />, { wrapper });
     expect(screen.getByRole('link', { name: 'Projects' })).toHaveAttribute('aria-current', 'page');
