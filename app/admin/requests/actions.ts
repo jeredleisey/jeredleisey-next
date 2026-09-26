@@ -1,33 +1,21 @@
 'use server';
 
 import { revalidatePath } from 'next/cache';
-import { notFound } from 'next/navigation';
-import { getAccess, getSessionUser } from '@/lib/access/server';
+import { adminActionAccess, field } from '../guard';
 
-// Every action checks the session and the Admin itself. A direct POST
-// that skips the page gets no further than the page would.
-async function adminAccess() {
-  const user = await getSessionUser();
-  if (!user) notFound();
-  const access = await getAccess();
-  if (!access.isAdmin(user)) notFound();
-  return access;
-}
-
-function requestIdFrom(formData: FormData): string {
-  const id = formData.get('requestId');
-  return typeof id === 'string' ? id : '';
-}
-
-// Approves into the Project's default Role.
+// Approves into the Role that the Admin picked. With no Role picked, the
+// Access module uses the Project's default Role.
 export async function approveRequestAction(formData: FormData) {
-  const access = await adminAccess();
-  await access.approve(requestIdFrom(formData));
+  const access = await adminActionAccess();
+  const roleId = field(formData, 'roleId');
+  await access.approve(field(formData, 'requestId'), roleId || undefined);
   revalidatePath('/admin/requests');
+  revalidatePath('/admin/users');
+  revalidatePath('/admin/roles');
 }
 
 export async function declineRequestAction(formData: FormData) {
-  const access = await adminAccess();
-  await access.decline(requestIdFrom(formData));
+  const access = await adminActionAccess();
+  await access.decline(field(formData, 'requestId'));
   revalidatePath('/admin/requests');
 }

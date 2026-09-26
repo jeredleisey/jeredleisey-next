@@ -1,28 +1,23 @@
-import { notFound, redirect } from 'next/navigation';
 import { SubmitButton } from '@/components/SubmitButton';
-import type { AccessRequestInfo } from '@/lib/access';
-import { getAccess, getSessionUser } from '@/lib/access/server';
+import type { AccessRequestInfo, RoleSummary } from '@/lib/access';
 import { formatDate } from '@/lib/format';
 import { getProject } from '@/lib/projects';
+import { AdminNav } from '../AdminNav';
+import { adminPageAccess } from '../guard';
+import { button, input, label, muted, row } from '../styles';
 import { approveRequestAction, declineRequestAction } from './actions';
 
 export const metadata = { title: 'Access Requests — Jered Leisey' };
 
-const label = 'text-my-walnut dark:text-my-stone text-xs uppercase tracking-widest';
-const button =
-  'border border-my-stone/40 dark:border-my-stone/20 px-4 py-2 text-xs uppercase tracking-widest text-my-espresso dark:text-my-cream hover:border-my-orange hover:text-my-orange disabled:opacity-50 transition-colors';
-
 export default async function AccessRequestsPage() {
-  // proxy.ts only checks for a cookie. The real checks happen here.
-  const user = await getSessionUser();
-  if (!user) redirect('/sign-in?next=/admin/requests');
-  const access = await getAccess();
-  if (!access.isAdmin(user)) notFound();
+  const access = await adminPageAccess('/admin/requests');
 
   const { pending, past } = await access.listRequests();
+  const roles = await access.listRoles();
 
   return (
     <div className="p-pad-2 max-w-2xl">
+      <AdminNav current="/admin/requests" />
       <h1 className={`${label} mb-pad-2`}>Access Requests</h1>
 
       <section className="mb-pad-2">
@@ -30,16 +25,15 @@ export default async function AccessRequestsPage() {
           Pending ({pending.length})
         </h2>
         {pending.length === 0 ? (
-          <p className="text-my-walnut dark:text-my-stone text-sm font-light">
-            No request waits for a decision.
-          </p>
+          <p className={muted}>No request waits for a decision.</p>
         ) : (
           <ul>
             {pending.map((request) => (
               <RequestRow key={request.id} request={request}>
-                <div className="flex gap-3 mt-3">
-                  <form action={approveRequestAction}>
+                <div className="flex flex-wrap items-center gap-3 mt-3">
+                  <form action={approveRequestAction} className="flex flex-wrap items-center gap-3">
                     <input type="hidden" name="requestId" value={request.id} />
+                    <RolePicker roles={roles} project={request.project} />
                     <SubmitButton pendingLabel="Approving…" className={button}>
                       Approve
                     </SubmitButton>
@@ -60,9 +54,7 @@ export default async function AccessRequestsPage() {
       <section>
         <h2 className={`${label} mb-3`}>Past ({past.length})</h2>
         {past.length === 0 ? (
-          <p className="text-my-walnut dark:text-my-stone text-sm font-light">
-            No request has a decision yet.
-          </p>
+          <p className={muted}>No request has a decision yet.</p>
         ) : (
           <ul>
             {past.map((request) => (
@@ -75,6 +67,25 @@ export default async function AccessRequestsPage() {
   );
 }
 
+// The Role to approve into. The Project's default Role is preselected.
+function RolePicker({ roles, project }: { roles: RoleSummary[]; project: string }) {
+  const defaultRole = roles.find((r) => r.defaultForProject === project);
+  return (
+    <label className="flex items-center gap-2">
+      <span className={label}>Role</span>
+      <select name="roleId" defaultValue={defaultRole?.id ?? ''} className={input}>
+        {!defaultRole && <option value="">Default Role</option>}
+        {roles.map((r) => (
+          <option key={r.id} value={r.id}>
+            {r.name}
+            {r.permissions.includes(project) ? '' : ' (does not open this Project)'}
+          </option>
+        ))}
+      </select>
+    </label>
+  );
+}
+
 function RequestRow({
   request,
   children,
@@ -84,7 +95,7 @@ function RequestRow({
 }) {
   const projectTitle = getProject(request.project)?.title ?? request.project;
   return (
-    <li className="border-b border-my-stone/30 dark:border-my-espresso/30 last:border-0 py-5">
+    <li className={row}>
       <div className="flex flex-wrap items-baseline justify-between gap-2">
         <span className="text-my-espresso dark:text-my-cream text-sm">
           {request.user.name}{' '}
