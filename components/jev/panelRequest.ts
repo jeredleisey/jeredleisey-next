@@ -35,10 +35,13 @@ export interface PanelSettings {
   questions: QuestionDraft[];
 }
 
+// Ids for items that the User adds. They exist only in the browser, after
+// hydration, so a counter is safe here. The "n" prefix keeps them apart
+// from the sample ids below.
 let lastId = 0;
 export function newId(): string {
   lastId += 1;
-  return `d${lastId}`;
+  return `n${lastId}`;
 }
 
 // A new, empty question of one type.
@@ -56,8 +59,12 @@ function text(value: unknown): string {
 
 // Turns questions in the API shape into drafts that the builder can edit.
 export function draftsFrom(questions: Questions): QuestionDraft[] {
+  // Numbered from 0 on every call, so the server and the browser render
+  // the same ids and hydration matches.
+  let n = 0;
+  const sampleId = () => `s${n++}`;
   return Object.entries(questions).map(([name, q]) => {
-    const base = { id: newId(), name, instructions: text(q.instructions) };
+    const base = { id: sampleId(), name, instructions: text(q.instructions) };
     if (q.type === 'noul')
       return {
         ...base,
@@ -70,7 +77,7 @@ export function draftsFrom(questions: Questions): QuestionDraft[] {
         ...base,
         type: 'choice',
         labels: Object.entries(q.criteria).map(([label, description]) => ({
-          id: newId(),
+          id: sampleId(),
           label,
           description: text(description),
         })),
@@ -78,7 +85,7 @@ export function draftsFrom(questions: Questions): QuestionDraft[] {
     return {
       ...base,
       type: 'score',
-      levels: q.criteria.map((level) => ({ id: newId(), text: text(level) })),
+      levels: q.criteria.map((level) => ({ id: sampleId(), text: text(level) })),
     };
   });
 }
