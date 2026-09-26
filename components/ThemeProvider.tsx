@@ -1,6 +1,6 @@
 'use client';
 
-import { createContext, useContext, useEffect, useState } from 'react';
+import { createContext, useContext, useSyncExternalStore } from 'react';
 
 type Theme = 'light' | 'dark';
 
@@ -11,23 +11,31 @@ interface ThemeContextValue {
 
 const ThemeContext = createContext<ThemeContextValue | null>(null);
 
-export function ThemeProvider({ children }: { children: React.ReactNode }) {
-  const [theme, setTheme] = useState<Theme>('light');
+// The `dark` class on <html> is the source of truth. The inline script in the
+// root layout sets it before first paint; after that only toggle() changes it.
+const listeners = new Set<() => void>();
 
-  useEffect(() => {
-    const raw = localStorage.getItem('theme');
-    const stored: Theme | null = raw === 'dark' || raw === 'light' ? raw : null;
-    const prefersDark = window.matchMedia?.('(prefers-color-scheme: dark)')?.matches ?? false;
-    const resolved = stored ?? (prefersDark ? 'dark' : 'light');
-    setTheme(resolved);
-    document.documentElement.classList.toggle('dark', resolved === 'dark');
-  }, []);
+function subscribe(onChange: () => void) {
+  listeners.add(onChange);
+  return () => listeners.delete(onChange);
+}
+
+function getSnapshot(): Theme {
+  return document.documentElement.classList.contains('dark') ? 'dark' : 'light';
+}
+
+function getServerSnapshot(): Theme {
+  return 'light';
+}
+
+export function ThemeProvider({ children }: { children: React.ReactNode }) {
+  const theme = useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
 
   function toggle() {
     const next: Theme = theme === 'dark' ? 'light' : 'dark';
     localStorage.setItem('theme', next);
     document.documentElement.classList.toggle('dark', next === 'dark');
-    setTheme(next);
+    listeners.forEach((notify) => notify());
   }
 
   return (

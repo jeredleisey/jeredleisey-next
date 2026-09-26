@@ -26,10 +26,18 @@ describe('ThemeProvider', () => {
     expect(localStorage.getItem('theme')).toBe('dark');
   });
 
-  it('reads saved dark preference from localStorage on mount', () => {
-    localStorage.setItem('theme', 'dark');
+  it('reports dark when <html> already has the dark class on mount', () => {
+    document.documentElement.classList.add('dark');
     const { result } = renderHook(() => useTheme(), { wrapper });
     expect(result.current.theme).toBe('dark');
-    expect(document.documentElement.classList.contains('dark')).toBe(true);
+  });
+
+  it('toggles back from dark to light', () => {
+    document.documentElement.classList.add('dark');
+    const { result } = renderHook(() => useTheme(), { wrapper });
+    act(() => { result.current.toggle(); });
+    expect(result.current.theme).toBe('light');
+    expect(document.documentElement.classList.contains('dark')).toBe(false);
+    expect(localStorage.getItem('theme')).toBe('light');
   });
 });
