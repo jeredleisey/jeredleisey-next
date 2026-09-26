@@ -7,6 +7,8 @@ export interface Project {
   protected: boolean;
   // Name of the Role that holds this Project's Permission by default.
   defaultRoleName: string;
+  // When the Project went live, as YYYY-MM-DD. It places the Project in the home feed.
+  date: string;
 }
 
 export const PROJECTS: readonly Project[] = [
@@ -17,6 +19,7 @@ export const PROJECTS: readonly Project[] = [
       'Try prompts against the Jev decision model from TypeSafe AI, with your own questions and criteria.',
     protected: true,
     defaultRoleName: 'Jev testers',
+    date: '2026-09-26',
   },
 ];
 
