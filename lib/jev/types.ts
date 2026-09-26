@@ -11,6 +11,7 @@ export type RunErrorKind =
   | 'unauthenticated'
   | 'no-access'
   | 'invalid-input'
+  | 'limit-reached'
   | 'upstream';
 
 export interface RunError {

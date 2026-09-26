@@ -64,6 +64,7 @@ describe('Users list', () => {
         id: ana.id,
         name: ana.name,
         email: ana.email,
+        emailVerified: true,
         createdAt: new Date('2026-09-02T08:00:00Z'),
         providers: ['github', 'google'],
         roles: [
@@ -75,6 +76,7 @@ describe('Users list', () => {
         id: ben.id,
         name: ben.name,
         email: ben.email,
+        emailVerified: true,
         createdAt: new Date('2026-09-01T08:00:00Z'),
         providers: [],
         roles: [],

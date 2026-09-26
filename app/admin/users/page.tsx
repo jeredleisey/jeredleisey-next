@@ -1,10 +1,12 @@
 import { SubmitButton } from '@/components/SubmitButton';
 import type { RoleSummary, UserSummary } from '@/lib/access';
 import { formatDate } from '@/lib/format';
+import type { RunUsage } from '@/lib/jev/run';
+import { getJevLimits } from '@/lib/jev/server';
 import { AdminNav } from '../AdminNav';
 import { adminPageAccess } from '../guard';
 import { button, input, label, muted, row, smallButton, tag } from '../styles';
-import { assignRoleAction, removeRoleAction } from './actions';
+import { assignRoleAction, removeRoleAction, setRunLimitAction } from './actions';
 
 export const metadata = { title: 'Users — Jered Leisey' };
 
@@ -15,6 +17,7 @@ export default async function UsersPage() {
 
   const users = await access.listUsers();
   const roles = await access.listRoles();
+  const usage = await (await getJevLimits()).usageByUser();
 
   return (
     <div className="p-pad-2 max-w-2xl">
@@ -25,7 +28,7 @@ export default async function UsersPage() {
       ) : (
         <ul>
           {users.map((u) => (
-            <UserRow key={u.id} user={u} roles={roles} />
+            <UserRow key={u.id} user={u} roles={roles} usage={usage.get(u.id)} isAdmin={access.isAdmin(u)} />
           ))}
         </ul>
       )}
@@ -33,7 +36,21 @@ export default async function UsersPage() {
   );
 }
 
-function UserRow({ user, roles }: { user: UserSummary; roles: RoleSummary[] }) {
+function formatCost(usd: number) {
+  return `$${usd.toFixed(usd > 0 && usd < 0.01 ? 6 : 2)}`;
+}
+
+function UserRow({
+  user,
+  roles,
+  usage,
+  isAdmin,
+}: {
+  user: UserSummary;
+  roles: RoleSummary[];
+  usage: RunUsage | undefined;
+  isAdmin: boolean;
+}) {
   const held = new Set(user.roles.map((r) => r.id));
   const assignable = roles.filter((r) => !held.has(r.id));
   const providers = user.providers.map((p) => PROVIDER_NAMES[p] ?? p).join(', ');
@@ -68,6 +85,41 @@ function UserRow({ user, roles }: { user: UserSummary; roles: RoleSummary[] }) {
           </form>
         ))}
       </div>
+
+      {usage && (
+        <div className="flex flex-wrap items-center gap-x-6 gap-y-3 mt-3">
+          <span className="text-xs text-my-espresso dark:text-my-cream">
+            <span className={label}>Runs</span> {usage.runs}{' '}
+            <span className="text-my-walnut dark:text-my-stone">({usage.runsLast24Hours} in 24 h)</span>
+          </span>
+          <span className="text-xs text-my-espresso dark:text-my-cream">
+            <span className={label}>Cost</span> {formatCost(usage.cost)}
+          </span>
+          {isAdmin ? (
+            <span className={muted}>No Run limit</span>
+          ) : (
+            <form action={setRunLimitAction} className="flex items-center gap-2">
+              <input type="hidden" name="userId" value={user.id} />
+              <label htmlFor={`limit-${user.id}`} className={label}>
+                Limit per 24 h
+              </label>
+              <input
+                id={`limit-${user.id}`}
+                name="limit"
+                type="number"
+                min={0}
+                step={1}
+                required
+                defaultValue={usage.limit}
+                className={`${input} w-20`}
+              />
+              <SubmitButton pendingLabel="Saving…" className={button}>
+                Save
+              </SubmitButton>
+            </form>
+          )}
+        </div>
+      )}
 
       {assignable.length > 0 && (
         <form action={assignRoleAction} className="flex flex-wrap items-center gap-3 mt-3">
