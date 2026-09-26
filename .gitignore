@@ -47,3 +47,6 @@ next-env.d.ts
 # agent working files
 docs/reports/
 docs/superpowers/
+
+# personal notes
+notes/
