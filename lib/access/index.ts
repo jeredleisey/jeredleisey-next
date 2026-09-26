@@ -56,6 +56,7 @@ export interface UserSummary {
   id: string;
   name: string;
   email: string;
+  emailVerified: boolean;
   // The sign-up date.
   createdAt: Date;
   // The sign-in providers linked to this User, such as google and github.
@@ -394,6 +395,7 @@ export function createAccess(db: SiteDb, config: AccessConfig) {
         id: userTable.id,
         name: userTable.name,
         email: userTable.email,
+        emailVerified: userTable.emailVerified,
         createdAt: userTable.createdAt,
       })
       .from(userTable)

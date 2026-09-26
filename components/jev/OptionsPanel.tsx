@@ -40,7 +40,19 @@ export const sendToRunRoute: SendRun = async (request) => {
   }
 };
 
-export function OptionsPanel({ send = sendToRunRoute }: { send?: SendRun }) {
+function runsLeftText(n: number) {
+  return `${n} ${n === 1 ? 'Run' : 'Runs'} left. Each Run counts for 24 hours.`;
+}
+
+export function OptionsPanel({
+  send = sendToRunRoute,
+  runsLeft: initialRunsLeft,
+}: {
+  send?: SendRun;
+  // Runs left in the last 24 hours. null: no limit (the Admin). undefined: not shown.
+  runsLeft?: number | null;
+}) {
+  const [runsLeft, setRunsLeft] = useState(initialRunsLeft);
   const [model, setModel] = useState(DEFAULT_MODEL);
   const [state, setState] = useState(SAMPLE_STATE);
   const [stateMode, setStateMode] = useState<StateMode>('text');
@@ -68,7 +80,14 @@ export function OptionsPanel({ send = sendToRunRoute }: { send?: SendRun }) {
     }
     setPending(true);
     try {
-      setResult(await send(built.request));
+      const next = await send(built.request);
+      setResult(next);
+      if (next.ok || next.error.kind === 'upstream') {
+        // The call reached OpenRouter, so it counts.
+        setRunsLeft((n) => (typeof n === 'number' ? Math.max(0, n - 1) : n));
+      } else if (next.error.kind === 'limit-reached') {
+        setRunsLeft((n) => (typeof n === 'number' ? 0 : n));
+      }
     } catch {
       setResult({
         ok: false,
@@ -156,6 +175,11 @@ export function OptionsPanel({ send = sendToRunRoute }: { send?: SendRun }) {
         >
           {pending ? 'Running…' : 'Run'}
         </button>
+        {runsLeft !== undefined && (
+          <p className="mt-3 text-xs text-my-walnut dark:text-my-stone">
+            {runsLeft === null ? 'No Run limit on your account.' : runsLeftText(runsLeft)}
+          </p>
+        )}
       </div>
 
       {checked && !built.ok && (

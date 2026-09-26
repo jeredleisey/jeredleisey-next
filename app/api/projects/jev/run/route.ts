@@ -6,6 +6,7 @@ const STATUS: Record<RunErrorKind, number> = {
   unauthenticated: 401,
   'no-access': 403,
   'invalid-input': 400,
+  'limit-reached': 429,
   upstream: 502,
 };
 

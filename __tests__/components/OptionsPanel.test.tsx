@@ -620,4 +620,54 @@ describe('Options panel: noul questions', () => {
     );
     expect(send).not.toHaveBeenCalled();
   });
+
+  describe('Runs left', () => {
+    it('shows the Runs left, and one fewer after a Run', async () => {
+      render(<OptionsPanel send={async () => ({ ok: true, response: RESPONSE })} runsLeft={3} />);
+      expect(screen.getByText(/3 Runs left/)).toBeInTheDocument();
+      fireEvent.click(runButton());
+      expect(await screen.findByText(/2 Runs left/)).toBeInTheDocument();
+    });
+
+    it('counts a failed model call, because it reached OpenRouter', async () => {
+      render(
+        <OptionsPanel
+          send={async () => ({ ok: false, error: { kind: 'upstream', message: 'The Jev model call failed: down' } })}
+          runsLeft={2}
+        />,
+      );
+      fireEvent.click(runButton());
+      expect(await screen.findByText(/1 Run left/)).toBeInTheDocument();
+    });
+
+    it('shows no Runs left and the refusal when the limit is reached', async () => {
+      render(
+        <OptionsPanel
+          send={async () => ({ ok: false, error: { kind: 'limit-reached', message: 'You have used all your Runs for the last 24 hours. Try again later.' } })}
+          runsLeft={1}
+        />,
+      );
+      fireEvent.click(runButton());
+      expect(await screen.findByText(/used all your Runs/)).toBeInTheDocument();
+      expect(screen.getByText(/0 Runs left/)).toBeInTheDocument();
+    });
+
+    it('shows the Admin that there is no Run limit', () => {
+      render(<OptionsPanel send={async () => ({ ok: true, response: RESPONSE })} runsLeft={null} />);
+      expect(screen.getByText(/No Run limit/)).toBeInTheDocument();
+    });
+  });
+
+  it('renders the same field ids on every page load, so the server and the browser agree', () => {
+    const idsOf = () => {
+      const { container, unmount } = render(<OptionsPanel send={async () => ({ ok: true, response: RESPONSE })} />);
+      const ids = Array.from(container.querySelectorAll('[id]')).map((el) => el.id);
+      unmount();
+      return ids;
+    };
+    const first = idsOf();
+    expect(first.length).toBeGreaterThan(0);
+    expect(idsOf()).toEqual(first);
+  });
 });
+
