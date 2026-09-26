@@ -22,10 +22,13 @@ describe('GlobalNav', () => {
     expect(screen.getByRole('link', { name: 'Jered Leisey' })).toHaveAttribute('href', '/');
   });
 
-  it('shows Projects and none of the removed sections', () => {
+  it('shows Projects, then Dispatches, and none of the removed sections', () => {
     render(<GlobalNav />, { wrapper });
     const nav = screen.getByRole('navigation', { name: 'Site navigation' });
+    const labels = within(nav).getAllByRole('link').map((link) => link.textContent);
+    expect(labels).toEqual(['Projects', 'Dispatches']);
     expect(within(nav).getByRole('link', { name: 'Projects' })).toHaveAttribute('href', '/projects');
+    expect(within(nav).getByRole('link', { name: 'Dispatches' })).toHaveAttribute('href', '/dispatches');
     for (const removed of ['Home', 'Learn', 'Writing', 'Dialogues']) {
       expect(within(nav).queryByRole('link', { name: removed })).not.toBeInTheDocument();
     }
@@ -34,6 +37,7 @@ describe('GlobalNav', () => {
   it('highlights the section of the current page', () => {
     render(<GlobalNav />, { wrapper });
     expect(screen.getByRole('link', { name: 'Projects' })).toHaveAttribute('aria-current', 'page');
+    expect(screen.getByRole('link', { name: 'Dispatches' })).not.toHaveAttribute('aria-current');
   });
 
   it('renders the theme toggle button', () => {
