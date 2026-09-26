@@ -23,15 +23,21 @@ function questionError(name: string, q: unknown): string | null {
     return `Question "${name}" needs instructions.`;
   switch (q.type) {
     case 'noul':
-      return null;
+      // Criteria are optional. When given, both true and false are needed.
+      if (q.criteria === undefined) return null;
+      return isObject(q.criteria) && isFilled(q.criteria.true) && isFilled(q.criteria.false)
+        ? null
+        : `Noul question "${name}" needs both true and false criteria, or none.`;
     case 'choice':
       return isObject(q.criteria) && isFilled(q.criteria)
         ? null
         : `Choice question "${name}" needs at least one label.`;
     case 'score':
-      return Array.isArray(q.criteria) && q.criteria.length > 0
+      if (!Array.isArray(q.criteria) || q.criteria.length === 0)
+        return `Score question "${name}" needs at least one level.`;
+      return q.criteria.every(isFilled)
         ? null
-        : `Score question "${name}" needs at least one level.`;
+        : `Score question "${name}" has an empty level.`;
     default:
       return `Question "${name}" has an unknown type. Use noul, choice, or score.`;
   }
