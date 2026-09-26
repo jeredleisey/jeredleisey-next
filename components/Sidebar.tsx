@@ -4,35 +4,12 @@ import Link from 'next/link';
 import { useState } from 'react';
 import { usePathname } from 'next/navigation';
 import { GlobalNav } from './GlobalNav';
-import { SeriesTOC } from './SeriesTOC';
-import { ProjectsList } from './ProjectsList';
-import { WritingList } from './WritingList';
-import { DialoguesList } from './DialoguesList';
-import type { SeriesWithLessons, ProjectSummary, EssaySummary, DialogueSummary } from '@/lib/types';
-
-interface SidebarProps {
-  allSeries: SeriesWithLessons[];
-  allProjects: ProjectSummary[];
-  allEssays: EssaySummary[];
-  allDialogues: DialogueSummary[];
-}
-
-export function Sidebar({ allSeries, allProjects, allEssays, allDialogues }: SidebarProps) {
+export function Sidebar() {
   const pathname = usePathname();
   // The mobile drawer remembers the route it opened on, so it closes on any route change.
   const [openedAt, setOpenedAt] = useState<string | null>(null);
   const open = openedAt === pathname;
 
-  const lessonMatch = pathname.match(/^\/learn\/([^/]+)\/([^/]+)/);
-  const inProjects = pathname.startsWith('/projects');
-  const inWriting = pathname.startsWith('/writing');
-  const inDialogues = pathname.startsWith('/dialogues');
-
-  const currentSeries = lessonMatch
-    ? (allSeries.find((s) => s.slug === lessonMatch[1]) ?? null)
-    : null;
-
-  const hasSecondary = currentSeries || inProjects || inWriting || inDialogues;
 
   return (
     <>
@@ -86,14 +63,6 @@ export function Sidebar({ allSeries, allProjects, allEssays, allDialogues }: Sid
 
         <GlobalNav />
 
-        {hasSecondary && (
-          <div className="border-t border-my-stone/30 dark:border-my-espresso/30 mt-2">
-            {currentSeries && <SeriesTOC series={currentSeries} />}
-            {inProjects && <ProjectsList projects={allProjects} />}
-            {inWriting && <WritingList essays={allEssays} />}
-            {inDialogues && <DialoguesList dialogues={allDialogues} />}
-          </div>
-        )}
 
         <div className="mt-auto text-my-stone dark:text-my-stone/40 text-xs">
           © {new Date().getFullYear()}

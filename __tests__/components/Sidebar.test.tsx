@@ -16,7 +16,7 @@ vi.mock('@/lib/auth-client', () => ({
 function renderSidebar() {
   return render(
     <ThemeProvider>
-      <Sidebar allSeries={[]} allProjects={[]} allEssays={[]} allDialogues={[]} />
+      <Sidebar />
     </ThemeProvider>,
   );
 }
@@ -51,7 +51,7 @@ describe('Sidebar mobile drawer', () => {
     pathname = '/projects';
     rerender(
       <ThemeProvider>
-        <Sidebar allSeries={[]} allProjects={[]} allEssays={[]} allDialogues={[]} />
+        <Sidebar />
       </ThemeProvider>,
     );
     expect(menuButton()).toHaveAttribute('aria-expanded', 'false');
