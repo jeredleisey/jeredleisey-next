@@ -32,6 +32,14 @@ export function UserMenu() {
       <span className="text-xs text-my-espresso dark:text-my-cream truncate" title={session.user.email}>
         {session.user.name || session.user.email}
       </span>
+      {session.user.isAdmin && (
+        <Link
+          href="/admin"
+          className="self-start text-xs text-my-walnut hover:text-my-espresso dark:text-my-stone dark:hover:text-my-cream transition-colors"
+        >
+          Admin
+        </Link>
+      )}
       <button
         type="button"
         onClick={signOut}
