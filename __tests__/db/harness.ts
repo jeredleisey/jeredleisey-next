@@ -1,15 +1,36 @@
 import path from 'path';
+import { beforeAll } from 'vitest';
 import { PGlite } from '@electric-sql/pglite';
 import { drizzle } from 'drizzle-orm/pglite';
 import { migrate } from 'drizzle-orm/pglite/migrator';
 import * as schema from '@/lib/db/schema';
 
-// A fresh in-memory Postgres with every migration applied.
-// Tests use this instead of Neon, so they need no network and no secrets.
+// Start Postgres and run the migrations once per test file. Starting
+// PGlite is the slow part, and doing it inside a test made the first test
+// of a file time out on a busy machine.
+let template: Promise<PGlite> | undefined;
+
+function migratedTemplate(): Promise<PGlite> {
+  template ??= (async () => {
+    const pg = new PGlite();
+    await migrate(drizzle(pg, { schema }), {
+      migrationsFolder: path.resolve(__dirname, '../../drizzle'),
+    });
+    return pg;
+  })();
+  return template;
+}
+
+// Build the template before the first test of each file that uses the
+// harness, with its own time budget, so a test times only its own behavior.
+beforeAll(() => migratedTemplate().then(() => undefined), 30_000);
+
+// A fresh in-memory Postgres with every migration applied: a clone of the
+// template, so tests never share data. Tests use this instead of Neon, so
+// they need no network and no secrets.
 export async function createTestDb() {
-  const db = drizzle(new PGlite(), { schema });
-  await migrate(db, { migrationsFolder: path.resolve(__dirname, '../../drizzle') });
-  return db;
+  const pg = (await (await migratedTemplate()).clone()) as PGlite;
+  return drizzle(pg, { schema });
 }
 
 export type TestDb = Awaited<ReturnType<typeof createTestDb>>;
