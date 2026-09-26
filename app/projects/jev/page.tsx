@@ -14,7 +14,7 @@ export default async function JevProjectPage() {
   if (!user) redirect(`/sign-in?next=/projects/${project.slug}`);
 
   const access = await (await getAccess()).accessFor(user, project.slug);
-  if (access.status !== 'granted') return <AccessSplash project={project} />;
+  if (access.status !== 'granted') return <AccessSplash project={project} access={access} />;
 
   return (
     <div className="p-pad-2 max-w-2xl">
