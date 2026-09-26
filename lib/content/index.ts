@@ -4,3 +4,5 @@
 export { ContentError } from './frontmatter';
 export { getFacets, getPost, getPosts } from './posts';
 export type { Facets, Post, PostFilters, PostOptions } from './posts';
+export { getAllSeries, getSeries, getSeriesPart } from './series';
+export type { Series, SeriesPart } from './series';

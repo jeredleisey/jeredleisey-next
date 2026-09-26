@@ -12,7 +12,7 @@ import {
   requiredString,
 } from './frontmatter';
 
-const DEFAULT_CONTENT_DIR = path.join(process.cwd(), 'content');
+export const DEFAULT_CONTENT_DIR = path.join(process.cwd(), 'content');
 
 export interface Post {
   slug: string;
@@ -21,6 +21,9 @@ export interface Post {
   description: string;
   // The Project that the Post is about, from the Project registry.
   project?: Project;
+  // The Series that the Post belongs to, and its place in that Series.
+  series?: string;
+  seriesPosition?: number;
   draft: boolean;
   // Facets: the topics, audience, and use cases of a Post. Each is a list, empty when missing.
   topics: string[];
@@ -61,10 +64,31 @@ function readPost(filePath: string): Post {
     date: requiredDate(file, 'date'),
     description: requiredString(file, 'description'),
     project: projectOf(file),
+    ...seriesOf(file),
     draft: optionalBoolean(file, 'draft'),
     ...facetsOf(file),
     content: file.content,
   };
+}
+
+function seriesOf(file: MdxFile): Pick<Post, 'series' | 'seriesPosition'> {
+  const series = optionalString(file, 'series');
+  if (series === undefined) return {};
+  // The slug becomes a URL segment and the name of the series file.
+  if (!/^[a-z0-9]+(-[a-z0-9]+)*$/.test(series)) {
+    throw new ContentError(
+      file.filePath,
+      '"series" must be a slug of lowercase letters, digits, and hyphens',
+    );
+  }
+  const position = file.data.seriesPosition;
+  if (position === undefined || position === null) {
+    throw new ContentError(file.filePath, '"seriesPosition" is required when "series" is set');
+  }
+  if (typeof position !== 'number' || !Number.isInteger(position) || position < 1) {
+    throw new ContentError(file.filePath, '"seriesPosition" must be a whole number of 1 or more');
+  }
+  return { series, seriesPosition: position };
 }
 
 function facetsOf(file: MdxFile): Pick<Post, 'topics' | 'audience' | 'useCases'> {

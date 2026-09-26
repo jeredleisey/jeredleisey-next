@@ -1,7 +1,7 @@
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { MDXRemote } from 'next-mdx-remote-client/rsc';
-import { getPost, getPosts } from '@/lib/content';
+import { getPost, getPosts, getSeriesPart } from '@/lib/content';
 import { formatDate } from '@/lib/format';
 import { proseClasses } from '@/lib/proseClasses';
 
@@ -47,6 +47,7 @@ export default async function PostPage({ params }: Props) {
   const { slug } = await params;
   const post = getPost(slug, { includeDrafts });
   if (!post) notFound();
+  const part = getSeriesPart(slug, { includeDrafts });
 
   return (
     <div className="p-pad-2 max-w-2xl">
@@ -56,6 +57,18 @@ export default async function PostPage({ params }: Props) {
           {post.draft && <span className="text-my-orange"> · Draft</span>}
         </p>
         <h1 className="text-my-espresso dark:text-my-cream text-2xl font-light leading-snug">{post.title}</h1>
+        {part && (
+          <p className="mt-3 text-xs">
+            <Link href={`/dispatches/series/${part.series.slug}`} className="group">
+              <span className="uppercase tracking-widest text-my-walnut dark:text-my-stone group-hover:text-my-orange transition-colors">
+                Part {part.part} of {part.parts}
+              </span>{' '}
+              <span className="text-my-orange group-hover:text-my-espresso dark:group-hover:text-my-cream transition-colors">
+                {part.series.title}
+              </span>
+            </Link>
+          </p>
+        )}
         {post.project && (
           <p className="mt-3 text-xs text-my-walnut dark:text-my-stone">
             <span className="uppercase tracking-widest">Project</span>{' '}
@@ -75,6 +88,36 @@ export default async function PostPage({ params }: Props) {
       <div className={proseClasses}>
         <MDXRemote source={post.content} />
       </div>
+
+      {part && (part.previous || part.next) && (
+        <nav
+          aria-label={`${part.series.title} Series`}
+          className="mt-pad-2 pt-5 border-t border-my-stone/30 dark:border-my-espresso/30 grid grid-cols-2 gap-5"
+        >
+          {part.previous ? (
+            <Link href={`/dispatches/${part.previous.slug}`} className="group flex flex-col gap-1">
+              <span className="text-my-walnut/60 dark:text-my-stone/60 text-xs uppercase tracking-widest">
+                ← Previous
+              </span>
+              <span className="text-my-espresso dark:text-my-cream text-sm group-hover:text-my-orange transition-colors">
+                {part.previous.title}
+              </span>
+            </Link>
+          ) : (
+            <span />
+          )}
+          {part.next && (
+            <Link href={`/dispatches/${part.next.slug}`} className="group flex flex-col gap-1 text-right">
+              <span className="text-my-walnut/60 dark:text-my-stone/60 text-xs uppercase tracking-widest">
+                Next →
+              </span>
+              <span className="text-my-espresso dark:text-my-cream text-sm group-hover:text-my-orange transition-colors">
+                {part.next.title}
+              </span>
+            </Link>
+          )}
+        </nav>
+      )}
     </div>
   );
 }
