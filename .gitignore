@@ -50,3 +50,6 @@ docs/superpowers/
 
 # personal notes
 notes/
+
+# agent worktrees
+.claude/
