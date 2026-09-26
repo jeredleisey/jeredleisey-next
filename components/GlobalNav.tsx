@@ -8,6 +8,7 @@ import { UserMenu } from './UserMenu';
 // The site name links home, so Home is not a section.
 const NAV_ITEMS = [
   { label: 'Projects', href: '/projects' },
+  { label: 'Dispatches', href: '/dispatches' },
   { label: 'About', href: '/about' },
 ] as const;
 
