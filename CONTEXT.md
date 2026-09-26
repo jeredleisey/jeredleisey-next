@@ -10,6 +10,22 @@ Jered Leisey's personal website: a portfolio of his work, a blog, and a personal
 An interactive, working piece of software that a person uses on the site, such as the Jev prompt tester. A Project is not an article about software.
 _Avoid_: Demo, tool, playground, writeup
 
+**Post**:
+A long-form piece of writing with a title: an essay, a lesson, research, or a writeup of a Project's findings. The site lists Posts under **Dispatches**.
+_Avoid_: Article, essay, blog post, writeup
+
+**Series**:
+An ordered set of Posts that are meant to be read one after the other.
+_Avoid_: Course, collection, track
+
+**Update**:
+A short, dated, personal entry, often with a photo, like a social media post. An Update often has no title.
+_Avoid_: Status, note, tweet, story
+
+**Draft**:
+A Post or an Update that is not published yet. Only Jered sees it, while he writes it.
+_Avoid_: Unpublished, hidden, private
+
 **Run**:
 One call that a User makes from a Project to a paid model API. Each Run has a cost to Jered.
 _Avoid_: Request, call, query
