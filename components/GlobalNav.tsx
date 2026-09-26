@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { ThemeToggle } from './ThemeToggle';
+import { UserMenu } from './UserMenu';
 
 const NAV_ITEMS = [
   { label: 'Home', href: '/' },
@@ -43,6 +44,9 @@ export function GlobalNav() {
       </nav>
       <div className="mt-3">
         <ThemeToggle />
+      </div>
+      <div className="mt-3">
+        <UserMenu />
       </div>
     </div>
   );

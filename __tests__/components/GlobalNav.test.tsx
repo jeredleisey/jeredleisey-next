@@ -5,6 +5,11 @@ import { ThemeProvider } from '@/components/ThemeProvider';
 
 vi.mock('next/navigation', () => ({
   usePathname: () => '/learn',
+  useRouter: () => ({ refresh: vi.fn() }),
+}));
+
+vi.mock('@/lib/auth-client', () => ({
+  authClient: { useSession: () => ({ data: null, isPending: false }), signOut: vi.fn() },
 }));
 
 function wrapper({ children }: { children: React.ReactNode }) {
