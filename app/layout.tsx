@@ -37,7 +37,9 @@ export default async function RootLayout({
             allEssays={allEssays}
             allDialogues={allDialogues}
           />
-          <main className="flex-1 overflow-y-auto pt-14 md:pt-0">
+          {/* relative: keeps absolutely positioned children (such as sr-only
+              labels) inside main's scroll area, so the whole page never scrolls. */}
+          <main className="relative flex-1 overflow-y-auto pt-14 md:pt-0">
             {children}
           </main>
         </ThemeProvider>
