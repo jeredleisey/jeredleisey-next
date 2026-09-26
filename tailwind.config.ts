@@ -22,9 +22,12 @@ export default {
         },
       },
       fontFamily: {
-        'neue-montreal': ['Neue-Montreal', 'system-ui', 'sans-serif'],
-        sans: ['Neue-Montreal', 'system-ui', 'sans-serif'],
-        serif: ['Newsreader', 'Georgia', 'serif'],
+        // The variables come from app/fonts.ts (next/font/local). Each one
+        // already holds its own fallback stack. The names after it apply only
+        // when the variable is not set.
+        'neue-montreal': ['var(--font-neue-montreal)', 'system-ui', 'sans-serif'],
+        sans: ['var(--font-neue-montreal)', 'system-ui', 'sans-serif'],
+        serif: ['var(--font-newsreader)', 'Georgia', 'serif'],
       },
       spacing: {
         'pad-2': 'max(20px, 4vmin)',

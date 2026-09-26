@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import './globals.css';
+import { neueMontreal, newsreader } from './fonts';
 import { Sidebar } from '@/components/Sidebar';
 import { ThemeProvider } from '@/components/ThemeProvider';
 import { themeScript } from '@/lib/theme';
@@ -25,7 +26,11 @@ export default async function RootLayout({
 
   return (
     // The inline theme script changes <html>'s class before hydration.
-    <html lang="en" className="h-full" suppressHydrationWarning>
+    <html
+      lang="en"
+      className={`h-full ${neueMontreal.variable} ${newsreader.variable}`}
+      suppressHydrationWarning
+    >
       <head>
         <script dangerouslySetInnerHTML={{ __html: themeScript }} />
       </head>
