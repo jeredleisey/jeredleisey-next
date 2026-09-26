@@ -9,6 +9,7 @@ import { UserMenu } from './UserMenu';
 const NAV_ITEMS = [
   { label: 'Projects', href: '/projects' },
   { label: 'Dispatches', href: '/dispatches' },
+  { label: 'About', href: '/about' },
 ] as const;
 
 export function GlobalNav() {

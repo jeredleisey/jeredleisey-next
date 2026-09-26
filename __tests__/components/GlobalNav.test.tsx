@@ -22,16 +22,22 @@ describe('GlobalNav', () => {
     expect(screen.getByRole('link', { name: 'Jered Leisey' })).toHaveAttribute('href', '/');
   });
 
-  it('shows Projects, then Dispatches, and none of the removed sections', () => {
+  it('shows Projects, Dispatches, and About in order, and none of the removed sections', () => {
     render(<GlobalNav />, { wrapper });
     const nav = screen.getByRole('navigation', { name: 'Site navigation' });
     const labels = within(nav).getAllByRole('link').map((link) => link.textContent);
-    expect(labels).toEqual(['Projects', 'Dispatches']);
+    expect(labels).toEqual(['Projects', 'Dispatches', 'About']);
     expect(within(nav).getByRole('link', { name: 'Projects' })).toHaveAttribute('href', '/projects');
     expect(within(nav).getByRole('link', { name: 'Dispatches' })).toHaveAttribute('href', '/dispatches');
     for (const removed of ['Home', 'Learn', 'Writing', 'Dialogues']) {
       expect(within(nav).queryByRole('link', { name: removed })).not.toBeInTheDocument();
     }
+  });
+
+  it('shows About', () => {
+    render(<GlobalNav />, { wrapper });
+    const nav = screen.getByRole('navigation', { name: 'Site navigation' });
+    expect(within(nav).getByRole('link', { name: 'About' })).toHaveAttribute('href', '/about');
   });
 
   it('highlights the section of the current page', () => {
