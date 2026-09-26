@@ -1,5 +1,5 @@
 import { notFound } from 'next/navigation';
-import { MDXRemote } from 'next-mdx-remote/rsc';
+import { MDXRemote } from 'next-mdx-remote-client/rsc';
 import { getProject, getAllProjects } from '@/lib/content';
 import { LessonRefs } from '@/components/LessonRefs';
 import { proseClasses } from '@/lib/proseClasses';
