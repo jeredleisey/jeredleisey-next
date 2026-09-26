@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { usePathname } from 'next/navigation';
 import { GlobalNav } from './GlobalNav';
 import { SeriesTOC } from './SeriesTOC';
@@ -19,12 +19,9 @@ interface SidebarProps {
 
 export function Sidebar({ allSeries, allProjects, allEssays, allDialogues }: SidebarProps) {
   const pathname = usePathname();
-  const [open, setOpen] = useState(false);
-
-  // Close the mobile drawer whenever the route changes.
-  useEffect(() => {
-    setOpen(false);
-  }, [pathname]);
+  // The mobile drawer remembers the route it opened on, so it closes on any route change.
+  const [openedAt, setOpenedAt] = useState<string | null>(null);
+  const open = openedAt === pathname;
 
   const lessonMatch = pathname.match(/^\/learn\/([^/]+)\/([^/]+)/);
   const inProjects = pathname.startsWith('/projects');
@@ -46,7 +43,7 @@ export function Sidebar({ allSeries, allProjects, allEssays, allDialogues }: Sid
         </Link>
         <button
           type="button"
-          onClick={() => setOpen(true)}
+          onClick={() => setOpenedAt(pathname)}
           aria-label="Open navigation menu"
           aria-expanded={open}
           className="-mr-2 p-2 text-my-espresso dark:text-my-cream"
@@ -63,7 +60,7 @@ export function Sidebar({ allSeries, allProjects, allEssays, allDialogues }: Sid
       {open && (
         <div
           className="md:hidden fixed inset-0 z-40 bg-black/40"
-          onClick={() => setOpen(false)}
+          onClick={() => setOpenedAt(null)}
           aria-hidden="true"
         />
       )}
@@ -77,7 +74,7 @@ export function Sidebar({ allSeries, allProjects, allEssays, allDialogues }: Sid
         {/* Close button — mobile only */}
         <button
           type="button"
-          onClick={() => setOpen(false)}
+          onClick={() => setOpenedAt(null)}
           aria-label="Close navigation menu"
           className="md:hidden self-end -mr-1 mb-1 p-1 text-my-walnut dark:text-my-stone hover:text-my-espresso dark:hover:text-my-cream transition-colors"
         >

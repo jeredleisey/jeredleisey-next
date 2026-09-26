@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import './globals.css';
 import { Sidebar } from '@/components/Sidebar';
 import { ThemeProvider } from '@/components/ThemeProvider';
+import { themeScript } from '@/lib/theme';
 import { getAllSeries, getAllProjects, getAllEssays, getAllDialogues } from '@/lib/content';
 
 export const metadata: Metadata = {
@@ -23,7 +24,11 @@ export default async function RootLayout({
   const allDialogues = getAllDialogues();
 
   return (
-    <html lang="en" className="h-full">
+    // The inline theme script changes <html>'s class before hydration.
+    <html lang="en" className="h-full" suppressHydrationWarning>
+      <head>
+        <script dangerouslySetInnerHTML={{ __html: themeScript }} />
+      </head>
       <body className="h-full bg-my-cream dark:bg-my-espresso font-neue-montreal flex transition-colors duration-200">
         <ThemeProvider>
           <Sidebar
