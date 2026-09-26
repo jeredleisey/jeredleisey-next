@@ -1,5 +1,6 @@
 import { redirect } from 'next/navigation';
 import { AccessSplash } from '@/components/AccessSplash';
+import { OptionsPanel } from '@/components/jev/OptionsPanel';
 import { getAccess, getSessionUser } from '@/lib/access/server';
 import { getProject } from '@/lib/projects';
 
@@ -16,9 +17,10 @@ export default async function JevProjectPage() {
   if (access.status !== 'granted') return <AccessSplash project={project} />;
 
   return (
-    <div className="p-pad-2 max-w-lg">
+    <div className="p-pad-2 max-w-2xl">
       <h1 className="text-2xl font-light text-my-espresso dark:text-my-cream mb-3">{project.title}</h1>
-      <p className="text-my-walnut dark:text-my-stone text-sm leading-relaxed">{project.description}</p>
+      <p className="text-my-walnut dark:text-my-stone text-sm leading-relaxed mb-pad-2">{project.description}</p>
+      <OptionsPanel />
     </div>
   );
 }
