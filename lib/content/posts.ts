@@ -5,6 +5,7 @@ import {
   ContentError,
   optionalBoolean,
   optionalString,
+  optionalStringList,
   readMdxFile,
   type MdxFile,
   requiredDate,
@@ -21,12 +22,24 @@ export interface Post {
   // The Project that the Post is about, from the Project registry.
   project?: Project;
   draft: boolean;
+  // Facets: the topics, audience, and use cases of a Post. Each is a list, empty when missing.
+  topics: string[];
+  audience: string[];
+  useCases: string[];
   content: string;
 }
 
 export interface PostOptions {
   contentDir?: string;
   includeDrafts?: boolean;
+}
+
+// getPosts filters by one value per facet. A Post matches when that facet holds the
+// value. Filters combine: a Post must match every filter that is given.
+export interface PostFilters {
+  topic?: string;
+  audience?: string;
+  useCase?: string;
 }
 
 // Every Post file in the content folder. A slug only ever comes from this list,
@@ -49,7 +62,16 @@ function readPost(filePath: string): Post {
     description: requiredString(file, 'description'),
     project: projectOf(file),
     draft: optionalBoolean(file, 'draft'),
+    ...facetsOf(file),
     content: file.content,
+  };
+}
+
+function facetsOf(file: MdxFile): Pick<Post, 'topics' | 'audience' | 'useCases'> {
+  return {
+    topics: optionalStringList(file, 'topics'),
+    audience: optionalStringList(file, 'audience'),
+    useCases: optionalStringList(file, 'useCases'),
   };
 }
 
@@ -63,13 +85,23 @@ function projectOf(file: MdxFile): Project | undefined {
   return project;
 }
 
+function matchesFilters(post: Post, { topic, audience, useCase }: PostFilters): boolean {
+  return (
+    (topic === undefined || post.topics.includes(topic)) &&
+    (audience === undefined || post.audience.includes(audience)) &&
+    (useCase === undefined || post.useCases.includes(useCase))
+  );
+}
+
 export function getPosts({
   contentDir = DEFAULT_CONTENT_DIR,
   includeDrafts = false,
-}: PostOptions = {}): Post[] {
+  ...filters
+}: PostOptions & PostFilters = {}): Post[] {
   return postFiles(contentDir)
     .map(readPost)
     .filter((p) => includeDrafts || !p.draft)
+    .filter((p) => matchesFilters(p, filters))
     .sort((a, b) => b.date.getTime() - a.date.getTime());
 }
 
@@ -81,4 +113,24 @@ export function getPost(
   if (!file) return null;
   const post = readPost(file);
   return includeDrafts || !post.draft ? post : null;
+}
+
+// The distinct facet values that Posts use, for the filter controls.
+export interface Facets {
+  topics: string[];
+  audiences: string[];
+  useCases: string[];
+}
+
+function distinctSorted(values: string[]): string[] {
+  return [...new Set(values)].sort((a, b) => a.localeCompare(b));
+}
+
+export function getFacets({ contentDir, includeDrafts }: PostOptions = {}): Facets {
+  const posts = getPosts({ contentDir, includeDrafts });
+  return {
+    topics: distinctSorted(posts.flatMap((p) => p.topics)),
+    audiences: distinctSorted(posts.flatMap((p) => p.audience)),
+    useCases: distinctSorted(posts.flatMap((p) => p.useCases)),
+  };
 }
