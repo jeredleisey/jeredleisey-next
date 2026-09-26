@@ -6,7 +6,10 @@ import { ThemeToggle } from './ThemeToggle';
 import { UserMenu } from './UserMenu';
 
 // The site name links home, so Home is not a section.
-const NAV_ITEMS = [{ label: 'Projects', href: '/projects' }] as const;
+const NAV_ITEMS = [
+  { label: 'Projects', href: '/projects' },
+  { label: 'About', href: '/about' },
+] as const;
 
 export function GlobalNav() {
   const pathname = usePathname();
