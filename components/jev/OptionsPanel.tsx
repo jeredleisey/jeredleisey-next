@@ -8,6 +8,15 @@ import {
 } from '@/lib/jev/samples';
 import type { DecisionsRequest, RunResult } from '@/lib/jev/types';
 import { RunResults } from './RunResults';
+import { buildRequest, draftsFrom, type StateMode } from './panelRequest';
+import {
+  FieldError,
+  QuestionBuilder,
+  box,
+  errorProps,
+  fieldLabel as label,
+  input,
+} from './QuestionBuilder';
 
 export type SendRun = (request: DecisionsRequest) => Promise<RunResult>;
 
@@ -31,33 +40,35 @@ export const sendToRunRoute: SendRun = async (request) => {
   }
 };
 
-const label =
-  'block text-my-walnut dark:text-my-stone text-xs uppercase tracking-widest mb-2';
-const box = 'border border-my-stone/40 dark:border-my-stone/20';
-
-function criteriaText(q: DecisionsRequest['questions'][string]): string {
-  if (q.type === 'choice') return Object.keys(q.criteria).join(', ');
-  if (q.type === 'score')
-    return q.criteria
-      .map((c) => (typeof c === 'string' ? c : JSON.stringify(c)))
-      .join(' < ');
-  if (q.criteria)
-    return `true: ${String(q.criteria.true)}. false: ${String(q.criteria.false)}.`;
-  return '';
-}
-
 export function OptionsPanel({ send = sendToRunRoute }: { send?: SendRun }) {
+  const [model, setModel] = useState(DEFAULT_MODEL);
   const [state, setState] = useState(SAMPLE_STATE);
+  const [stateMode, setStateMode] = useState<StateMode>('text');
+  const [questions, setQuestions] = useState(() =>
+    draftsFrom(SAMPLE_QUESTIONS)
+  );
   const [pending, setPending] = useState(false);
   const [result, setResult] = useState<RunResult | null>(null);
+  // Errors show after the first refused Run, and then follow each edit.
+  const [checked, setChecked] = useState(false);
+
+  const built = buildRequest({
+    model,
+    stateMode,
+    state,
+    questions,
+  });
+  const errors = checked && !built.ok ? built.errors : {};
 
   async function onRun() {
     if (pending) return;
+    if (!built.ok) {
+      setChecked(true);
+      return;
+    }
     setPending(true);
     try {
-      setResult(
-        await send({ model: DEFAULT_MODEL, state, questions: SAMPLE_QUESTIONS })
-      );
+      setResult(await send(built.request));
     } catch {
       setResult({
         ok: false,
@@ -75,45 +86,66 @@ export function OptionsPanel({ send = sendToRunRoute }: { send?: SendRun }) {
   return (
     <div className="flex flex-col gap-pad-2">
       <div>
-        <span className={label}>Model</span>
-        <p className="text-my-espresso dark:text-my-cream text-sm font-light font-mono">
-          {DEFAULT_MODEL}
-        </p>
+        <label htmlFor="jev-model" className={label}>
+          Model
+        </label>
+        <input
+          id="jev-model"
+          value={model}
+          onChange={(e) => setModel(e.target.value)}
+          spellCheck={false}
+          className={`${input} font-mono`}
+          {...errorProps('jev-model-error', errors.model)}
+        />
+        <FieldError id="jev-model-error" message={errors.model} />
       </div>
 
       <div>
         <label htmlFor="jev-state" className={label}>
           State
         </label>
+        <fieldset className="flex gap-4 mb-2">
+          <legend className="sr-only">Format</legend>
+          {(
+            [
+              ['text', 'Plain text'],
+              ['json', 'JSON'],
+            ] as const
+          ).map(([mode, name]) => (
+            <label
+              key={mode}
+              className="flex items-center gap-2 text-sm font-light text-my-espresso dark:text-my-cream"
+            >
+              <input
+                type="radio"
+                name="jev-state-mode"
+                value={mode}
+                checked={stateMode === mode}
+                onChange={() => setStateMode(mode)}
+                className="accent-my-orange"
+              />
+              {name}
+            </label>
+          ))}
+        </fieldset>
         <textarea
           id="jev-state"
           value={state}
           onChange={(e) => setState(e.target.value)}
-          rows={4}
-          className={`${box} w-full bg-transparent p-3 text-sm font-light text-my-espresso dark:text-my-cream focus:outline-none focus:border-my-orange`}
+          rows={stateMode === 'json' ? 8 : 4}
+          spellCheck={stateMode === 'text'}
+          className={`${input} ${stateMode === 'json' ? 'font-mono' : ''}`}
+          {...errorProps('jev-state-error', errors.state)}
         />
+        <FieldError id="jev-state-error" message={errors.state} />
       </div>
 
-      <div>
-        <span className={label}>Questions</span>
-        <ul
-          className={`${box} divide-y divide-my-stone/40 dark:divide-my-stone/20`}
-        >
-          {Object.entries(SAMPLE_QUESTIONS).map(([name, q]) => (
-            <li key={name} className="p-3">
-              <p className="text-sm text-my-espresso dark:text-my-cream">
-                {name}{' '}
-                <span className="text-my-walnut dark:text-my-stone text-xs uppercase tracking-widest ml-2">
-                  {q.type}
-                </span>
-              </p>
-              <p className="text-xs font-light text-my-walnut dark:text-my-stone mt-1">
-                {String(q.instructions)} {criteriaText(q)}
-              </p>
-            </li>
-          ))}
-        </ul>
-      </div>
+      <QuestionBuilder
+        questions={questions}
+        errors={errors.questions}
+        listError={errors.list}
+        onChange={setQuestions}
+      />
 
       <div>
         <button
@@ -125,6 +157,15 @@ export function OptionsPanel({ send = sendToRunRoute }: { send?: SendRun }) {
           {pending ? 'Running…' : 'Run'}
         </button>
       </div>
+
+      {checked && !built.ok && (
+        <p
+          role="alert"
+          className="border border-my-orange p-4 text-sm text-my-orange"
+        >
+          Fix the problems marked above, then Run again.
+        </p>
+      )}
 
       {result && !result.ok && (
         <p
