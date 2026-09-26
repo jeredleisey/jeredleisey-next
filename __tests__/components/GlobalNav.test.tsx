@@ -1,10 +1,10 @@
 import { describe, it, expect, vi } from 'vitest';
-import { render, screen } from '@testing-library/react';
+import { render, screen, within } from '@testing-library/react';
 import { GlobalNav } from '@/components/GlobalNav';
 import { ThemeProvider } from '@/components/ThemeProvider';
 
 vi.mock('next/navigation', () => ({
-  usePathname: () => '/learn',
+  usePathname: () => '/projects/jev',
   useRouter: () => ({ refresh: vi.fn() }),
 }));
 
@@ -17,26 +17,23 @@ function wrapper({ children }: { children: React.ReactNode }) {
 }
 
 describe('GlobalNav', () => {
-  it('renders the site name', () => {
+  it('links the site name to the home page', () => {
     render(<GlobalNav />, { wrapper });
-    expect(screen.getByText('Jered Leisey')).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Jered Leisey' })).toHaveAttribute('href', '/');
   });
 
-  it('renders all five nav links', () => {
+  it('shows Projects and none of the removed sections', () => {
     render(<GlobalNav />, { wrapper });
-    expect(screen.getByRole('link', { name: 'Home' })).toBeInTheDocument();
-    expect(screen.getByRole('link', { name: 'Learn' })).toBeInTheDocument();
-    expect(screen.getByRole('link', { name: 'Projects' })).toBeInTheDocument();
-    expect(screen.getByRole('link', { name: 'Writing' })).toBeInTheDocument();
-    expect(screen.getByRole('link', { name: 'Dialogues' })).toBeInTheDocument();
+    const nav = screen.getByRole('navigation', { name: 'Site navigation' });
+    expect(within(nav).getByRole('link', { name: 'Projects' })).toHaveAttribute('href', '/projects');
+    for (const removed of ['Home', 'Learn', 'Writing', 'Dialogues']) {
+      expect(within(nav).queryByRole('link', { name: removed })).not.toBeInTheDocument();
+    }
   });
 
-  it('highlights the active section in orange', () => {
+  it('highlights the section of the current page', () => {
     render(<GlobalNav />, { wrapper });
-    const learnLink = screen.getByRole('link', { name: 'Learn' });
-    expect(learnLink).toHaveClass('text-my-orange');
-    const homeLink = screen.getByRole('link', { name: 'Home' });
-    expect(homeLink).not.toHaveClass('text-my-orange');
+    expect(screen.getByRole('link', { name: 'Projects' })).toHaveAttribute('aria-current', 'page');
   });
 
   it('renders the theme toggle button', () => {

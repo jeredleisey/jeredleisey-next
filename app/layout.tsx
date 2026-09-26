@@ -4,7 +4,6 @@ import { neueMontreal, newsreader } from './fonts';
 import { Sidebar } from '@/components/Sidebar';
 import { ThemeProvider } from '@/components/ThemeProvider';
 import { themeScript } from '@/lib/theme';
-import { getAllSeries, getAllProjects, getAllEssays, getAllDialogues } from '@/lib/content';
 
 export const metadata: Metadata = {
   title: 'Jered Leisey',
@@ -14,15 +13,11 @@ export const metadata: Metadata = {
   },
 };
 
-export default async function RootLayout({
+export default function RootLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  const allSeries = getAllSeries();
-  const allProjects = getAllProjects();
-  const allEssays = getAllEssays();
-  const allDialogues = getAllDialogues();
 
   return (
     // The inline theme script changes <html>'s class before hydration.
@@ -36,12 +31,7 @@ export default async function RootLayout({
       </head>
       <body className="h-full bg-my-cream dark:bg-my-espresso font-neue-montreal flex transition-colors duration-200">
         <ThemeProvider>
-          <Sidebar
-            allSeries={allSeries}
-            allProjects={allProjects}
-            allEssays={allEssays}
-            allDialogues={allDialogues}
-          />
+          <Sidebar />
           {/* relative: keeps absolutely positioned children (such as sr-only
               labels) inside main's scroll area, so the whole page never scrolls. */}
           <main className="relative flex-1 overflow-y-auto pt-14 md:pt-0">
