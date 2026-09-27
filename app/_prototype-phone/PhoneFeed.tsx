@@ -8,7 +8,7 @@
 // B: a thin rail on the right, like the desktop panel.
 // C: a button in the top bar that drops the feed down from under the bar.
 // In A and B the edge hides while you scroll down and comes back when you scroll up.
-import { useEffect, useState, useSyncExternalStore } from 'react';
+import { useEffect, useRef, useState, useSyncExternalStore } from 'react';
 import { usePathname } from 'next/navigation';
 import { FeedList } from '@/components/home/FeedList';
 import type { SplitFeed } from '@/lib/content';
@@ -114,9 +114,63 @@ export function PhoneFeed({ feed }: { feed: SplitFeed }) {
     };
   }, [reading, variant]);
 
-  // Variant A: drag the sheet's top edge down to close it.
+  // Variant A: drag the sheet down to close it, by its top edge, or anywhere on the feed
+  // when the feed is already at its top as the finger lands. A drag that starts on a
+  // scrolled feed only scrolls, even when it reaches the top, so one gesture never
+  // turns from a scroll into a close.
   const [dragStart, setDragStart] = useState<number | null>(null);
+  const [dragging, setDragging] = useState(false);
   const [dragY, setDragY] = useState(0);
+  const feedRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const el = feedRef.current;
+    if (!el || variant !== 'A' || !open) return;
+    let startY = 0;
+    let startT = 0;
+    let moved = 0;
+    let mode: 'undecided' | 'drag' | 'scroll' = 'scroll';
+    const onStart = (e: TouchEvent) => {
+      startY = e.touches[0].clientY;
+      startT = e.timeStamp;
+      moved = 0;
+      mode = el.scrollTop <= 0 ? 'undecided' : 'scroll';
+    };
+    const onMove = (e: TouchEvent) => {
+      if (mode === 'scroll') return;
+      const dy = e.touches[0].clientY - startY;
+      if (mode === 'undecided') {
+        if (Math.abs(dy) < 6) return;
+        mode = dy > 0 ? 'drag' : 'scroll';
+        if (mode === 'drag') setDragging(true);
+      }
+      if (mode === 'drag') {
+        // Stop the page from scrolling or bouncing while the sheet follows the finger.
+        e.preventDefault();
+        moved = Math.max(0, dy);
+        setDragY(moved);
+      }
+    };
+    const onEnd = (e: TouchEvent) => {
+      if (mode !== 'drag') return;
+      mode = 'scroll';
+      // A long drag or a fast flick closes. Anything else springs back.
+      const speed = moved / Math.max(1, e.timeStamp - startT);
+      setDragging(false);
+      setDragY(0);
+      if (moved > 100 || (moved > 30 && speed > 0.5)) setOpenedAt(null);
+    };
+    el.addEventListener('touchstart', onStart, { passive: true });
+    el.addEventListener('touchmove', onMove, { passive: false });
+    el.addEventListener('touchend', onEnd);
+    el.addEventListener('touchcancel', onEnd);
+    return () => {
+      el.removeEventListener('touchstart', onStart);
+      el.removeEventListener('touchmove', onMove);
+      el.removeEventListener('touchend', onEnd);
+      el.removeEventListener('touchcancel', onEnd);
+    };
+  }, [variant, open]);
 
   return (
     <div className="md:hidden">
@@ -157,7 +211,7 @@ export function PhoneFeed({ feed }: { feed: SplitFeed }) {
                   : hidden
                     ? 'translateY(calc(100% + 2rem))'
                     : 'translateY(calc(100% - 24px - env(safe-area-inset-bottom)))',
-                transition: dragStart === null ? `transform 400ms ${MOTION}` : 'none',
+                transition: dragStart === null && !dragging ? `transform 400ms ${MOTION}` : 'none',
               }}
             >
               <div
@@ -187,7 +241,8 @@ export function PhoneFeed({ feed }: { feed: SplitFeed }) {
                 </button>
               </div>
               <div
-                className="flex-1 min-h-0 overflow-y-auto px-5 pl-6 pb-10"
+                ref={feedRef}
+                className="flex-1 min-h-0 overflow-y-auto overscroll-contain px-5 pl-6 pb-10"
                 inert={!open}
                 style={{ opacity: open ? 1 : 0, transition: `opacity ${open ? '300ms 150ms' : '150ms'} ${MOTION}` }}
               >
