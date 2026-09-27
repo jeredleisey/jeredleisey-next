@@ -21,7 +21,7 @@ export default function HomePage() {
         </p>
         <p className="mt-6 text-xs text-my-walnut dark:text-my-stone">Latest work and life, newest first.</p>
 
-        <div className="mt-pad-4 lg:hidden">
+        <div className="mt-pad-4 md:hidden">
           <FeedList feed={feed} />
         </div>
       </div>

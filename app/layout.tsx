@@ -2,6 +2,8 @@ import type { Metadata } from 'next';
 import './globals.css';
 import { neueMontreal, newsreader } from './fonts';
 import { FeedPanel } from '@/components/FeedPanel';
+// PROTOTYPE (#78).
+import { PhoneFeed } from './_prototype-phone/PhoneFeed';
 import { Sidebar } from '@/components/Sidebar';
 import { ThemeProvider } from '@/components/ThemeProvider';
 import { getFeed, splitFeed } from '@/lib/content';
@@ -44,6 +46,7 @@ export default function RootLayout({
           </main>
           {/* On large screens the feed is a panel that survives navigation. */}
           <FeedPanel feed={feed} />
+          <PhoneFeed feed={feed} />
         </ThemeProvider>
       </body>
     </html>

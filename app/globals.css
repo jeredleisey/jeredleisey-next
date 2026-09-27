@@ -42,3 +42,13 @@ body {
   [data-feed-panel],
   [data-feed-panel] * { transition: none !important; }
 }
+
+/* PROTOTYPE (#78). Throwaway. Not for main.
+   On a phone, the home feed drops away as it fades, and the sheet's edge rises in from below. */
+@keyframes sheet-edge-in { from { transform: translateY(100%); } }
+@keyframes drop-out { to { translate: 0 80px; } }
+@media (max-width: 767px) {
+  ::view-transition-old(.home-out) {
+    animation: 250ms ease-in both fade-in reverse, 250ms ease-in both drop-out;
+  }
+}

@@ -52,7 +52,7 @@ export function FeedPanel({ feed }: { feed: SplitFeed }) {
         data-testid="feed-scrim"
         data-feed-panel
         onClick={() => setOpenedAt(null)}
-        className={`fixed inset-0 z-30 hidden lg:block bg-my-espresso/25 dark:bg-black/40 transition-opacity duration-300 ${
+        className={`fixed inset-0 z-30 hidden md:block bg-my-espresso/25 dark:bg-black/40 transition-opacity duration-300 ${
           open ? 'opacity-100' : 'opacity-0 pointer-events-none'
         }`}
       />
@@ -64,7 +64,7 @@ export function FeedPanel({ feed }: { feed: SplitFeed }) {
         aria-hidden={mode === 'none' || undefined}
         inert={mode === 'none'}
         data-feed-panel
-        className="relative z-40 shrink-0 hidden lg:block"
+        className="relative z-40 shrink-0 hidden md:block"
         style={{
           width: mode === 'docked' ? PANEL : mode === 'rail' ? RAIL : '0px',
           transition: `width 450ms ${MOTION}`,
