@@ -1,11 +1,11 @@
 // Shared editorial prose styling for all long-form reading surfaces
-// (essays, lessons, project writeups). Serif body (Newsreader), sans headings
-// (Neue Montreal), constrained reading measure. The single source of truth for
+// (essays, lessons, project writeups). Serif body and serif headings (Newsreader),
+// constrained reading measure. The single source of truth for
 // how prose content reads across the site.
 export const proseClasses = [
   'prose prose-lg max-w-[68ch] font-serif',
-  // headings stay sans + semibold — editorial contrast against the serif body
-  'prose-headings:font-neue-montreal prose-headings:font-semibold prose-headings:text-my-espresso dark:prose-headings:text-my-cream',
+  // Headings use the serif at medium weight, to match the serif titles (#92).
+  'prose-headings:font-serif prose-headings:font-medium prose-headings:text-my-espresso dark:prose-headings:text-my-cream',
   // body + lists
   'prose-p:text-my-walnut dark:prose-p:text-my-stone prose-p:leading-[1.7]',
   'prose-li:text-my-walnut dark:prose-li:text-my-stone',

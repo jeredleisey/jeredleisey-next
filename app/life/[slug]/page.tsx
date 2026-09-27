@@ -1,6 +1,7 @@
 import { notFound } from 'next/navigation';
 import { ReadingTransition } from '@/components/PageTransitions';
 import { UpdateBody } from '@/components/life/UpdateBody';
+import { ReadingLayout } from '@/components/reading/ReadingLayout';
 import { getUpdate, getUpdates } from '@/lib/content';
 import { formatDate } from '@/lib/format';
 
@@ -31,22 +32,9 @@ export default async function UpdatePage({ params }: Props) {
 
   return (
     <ReadingTransition>
-      <div className="p-pad-2 max-w-2xl">
-        <div className="mb-8">
-          <p className="text-my-walnut dark:text-my-stone text-xs uppercase tracking-widest mb-3">
-            {formatDate(update.date)}
-            {update.draft && <span className="text-my-orange"> · Draft</span>}
-          </p>
-          {update.title ? (
-            <h1 className="text-my-espresso dark:text-my-cream text-2xl font-light leading-snug">{update.title}</h1>
-          ) : (
-            // An Update often has no title. The page still needs a heading for screen readers.
-            <h1 className="sr-only">Update of {formatDate(update.date)}</h1>
-          )}
-        </div>
-
+      <ReadingLayout kindLabel="Life" slug={update.slug} date={update.date} draft={update.draft} title={update.title}>
         <UpdateBody update={update} />
-      </div>
+      </ReadingLayout>
     </ReadingTransition>
   );
 }
