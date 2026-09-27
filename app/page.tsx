@@ -15,9 +15,8 @@ export default function HomePage() {
   return (
     <HomeTransition>
       <div className="px-pad-2 py-pad-4">
-        {/* Placeholder: Jered writes the real sentence. */}
         <p className="font-serif font-light text-4xl xl:text-5xl leading-[1.1] text-my-espresso dark:text-my-cream max-w-md">
-          Jered Leisey. Software and automation.
+          I build software that takes repetitive work off people&apos;s desks. Lately, a lot of it runs on AI agents.
         </p>
         <p className="mt-6 text-xs text-my-walnut dark:text-my-stone">Latest work and life, newest first.</p>
 
