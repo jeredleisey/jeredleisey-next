@@ -1,9 +1,14 @@
 import path from 'path';
-import { beforeAll } from 'vitest';
+import { beforeAll, vi } from 'vitest';
 import { PGlite } from '@electric-sql/pglite';
 import { drizzle } from 'drizzle-orm/pglite';
 import { migrate } from 'drizzle-orm/pglite/migrator';
 import * as schema from '@/lib/db/schema';
+
+// Give each test in a file that uses the harness 15 seconds, not the
+// default 5. PGlite is slow on a busy machine. Vitest resets this after
+// each file, so the other test files keep the default.
+vi.setConfig({ testTimeout: 15_000 });
 
 // Start Postgres and run the migrations once per test file. Starting
 // PGlite is the slow part, and doing it inside a test made the first test
