@@ -38,7 +38,19 @@ body {
   ::view-transition-old(*),
   ::view-transition-new(*) { animation: none !important; }
 
-  /* The feed panel sets its transitions inline. */
+  /* The feed panel and the feed sheet set their transitions inline. */
   [data-feed-panel],
-  [data-feed-panel] * { transition: none !important; }
+  [data-feed-panel] * { transition: none !important; animation: none !important; }
+}
+
+/* The feed sheet on a phone (components/FeedSheet.tsx). On the home page, the feed drops
+   away as it fades. On a reading page, the sheet's edge rises in from below, and the page
+   gets room at the bottom so the edge never covers its last line. */
+@keyframes feed-edge-in { from { transform: translateY(100%); } }
+@keyframes drop-out { to { translate: 0 80px; } }
+@media (max-width: 767px) {
+  ::view-transition-old(.home-out) {
+    animation: 250ms ease-in both fade-in reverse, 250ms ease-in both drop-out;
+  }
+  main:has(~ [data-feed-sheet]) { padding-bottom: 3rem; }
 }

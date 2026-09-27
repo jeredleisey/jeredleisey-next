@@ -6,9 +6,9 @@ export const metadata = { title: 'Jered Leisey' };
 
 const FEED_LENGTH = 12;
 
-// The sentence, and the feed. On large screens the feed is the panel in the root
-// layout, docked open on this page. On small screens it runs under the sentence.
-// The design comes from #57 and #77.
+// The sentence, and the feed. From 768px the feed is the panel in the root layout,
+// open on this page. On a phone it runs under the sentence. The design comes from
+// #57, #77, and #78.
 export default function HomePage() {
   const feed = splitFeed(getFeed({ includeDrafts: process.env.NODE_ENV === 'development', limit: FEED_LENGTH }));
 
@@ -21,7 +21,7 @@ export default function HomePage() {
         </p>
         <p className="mt-6 text-xs text-my-walnut dark:text-my-stone">Latest work and life, newest first.</p>
 
-        <div className="mt-pad-4 lg:hidden">
+        <div className="mt-pad-4 md:hidden">
           <FeedList feed={feed} />
         </div>
       </div>

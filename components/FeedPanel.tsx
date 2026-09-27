@@ -3,34 +3,23 @@
 import { useEffect, useState } from 'react';
 import { usePathname } from 'next/navigation';
 import { FeedList } from './home/FeedList';
+import { FEED_MOTION as MOTION, feedMode } from './feedMode';
 import type { SplitFeed } from '@/lib/content';
 
 const PANEL = 'min(38rem, 46vw)';
 const RAIL = '3rem';
 // On hover the closed panel comes out this far, so it reads as a panel to pull open.
 const PEEK = '14px';
-const MOTION = 'cubic-bezier(0.2, 0, 0, 1)';
-
-type Mode = 'docked' | 'rail' | 'none';
-
-// Docked open on the home page. Closed to a rail on the page of one Post, Update, or
-// Project. Not there on any other page.
-function modeOf(pathname: string): Mode {
-  if (pathname === '/') return 'docked';
-  if (/^\/(dispatches|life|projects)\/[^/]+$/.test(pathname)) return 'rail';
-  return 'none';
-}
-
-// The feed as one panel in the root layout, on large screens only, so it survives
+// The feed as one panel in the root layout, 768px and wider, so it survives
 // navigation. When it closes, it slides to the right until only its left edge is on
 // screen: the rail is the panel's own edge.
 export function FeedPanel({ feed }: { feed: SplitFeed }) {
   const pathname = usePathname();
-  const mode = modeOf(pathname);
+  const mode = feedMode(pathname);
   const [peek, setPeek] = useState(false);
   // The panel remembers the route it opened on, so it closes on any route change.
   const [openedAt, setOpenedAt] = useState<string | null>(null);
-  const open = mode === 'rail' && openedAt === pathname;
+  const open = mode === 'closed' && openedAt === pathname;
 
   useEffect(() => {
     if (!open) return;
@@ -41,8 +30,8 @@ export function FeedPanel({ feed }: { feed: SplitFeed }) {
     return () => window.removeEventListener('keydown', onKey);
   }, [open]);
 
-  const shown = mode === 'docked' || open;
-  const offset = shown ? '0px' : mode === 'rail' ? `calc(${PANEL} - ${RAIL}${peek ? ` - ${PEEK}` : ''})` : PANEL;
+  const shown = mode === 'open' || open;
+  const offset = shown ? '0px' : mode === 'closed' ? `calc(${PANEL} - ${RAIL}${peek ? ` - ${PEEK}` : ''})` : PANEL;
 
   return (
     <>
@@ -52,7 +41,7 @@ export function FeedPanel({ feed }: { feed: SplitFeed }) {
         data-testid="feed-scrim"
         data-feed-panel
         onClick={() => setOpenedAt(null)}
-        className={`fixed inset-0 z-30 hidden lg:block bg-my-espresso/25 dark:bg-black/40 transition-opacity duration-300 ${
+        className={`fixed inset-0 z-30 hidden md:block bg-my-espresso/25 dark:bg-black/40 transition-opacity duration-300 ${
           open ? 'opacity-100' : 'opacity-0 pointer-events-none'
         }`}
       />
@@ -64,15 +53,15 @@ export function FeedPanel({ feed }: { feed: SplitFeed }) {
         aria-hidden={mode === 'none' || undefined}
         inert={mode === 'none'}
         data-feed-panel
-        className="relative z-40 shrink-0 hidden lg:block"
+        className="relative z-40 shrink-0 hidden md:block"
         style={{
-          width: mode === 'docked' ? PANEL : mode === 'rail' ? RAIL : '0px',
+          width: mode === 'open' ? PANEL : mode === 'closed' ? RAIL : '0px',
           transition: `width 450ms ${MOTION}`,
         }}
       >
         <div
           className={`absolute inset-y-0 right-0 flex bg-my-cream dark:bg-my-espresso border-l ${
-            mode !== 'rail'
+            mode !== 'closed'
               ? 'border-transparent'
               : peek && !open
                 ? 'border-my-walnut dark:border-my-stone'
@@ -85,7 +74,7 @@ export function FeedPanel({ feed }: { feed: SplitFeed }) {
           }}
         >
           <div className="relative w-12 shrink-0">
-            {mode === 'rail' && (
+            {mode === 'closed' && (
               <button
                 type="button"
                 onClick={() => setOpenedAt(open ? null : pathname)}
