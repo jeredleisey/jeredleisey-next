@@ -118,8 +118,14 @@ export function FeedPanel({ feed }: { feed: SplitFeed }) {
             )}
           </div>
 
-          {/* The feed. While the panel is closed, nothing in it takes focus. */}
-          <div className="flex-1 min-w-0 overflow-y-auto py-pad-4 pr-pad-2" inert={!shown}>
+          {/* The feed. While the panel is closed, it is transparent, so a peek shows only the
+              panel's edge, and nothing in it takes focus. The left padding keeps the dots and
+              the year ticks, which sit across the feed's line, inside the scroll area. */}
+          <div
+            className="flex-1 min-w-0 overflow-y-auto py-pad-4 pl-2 pr-pad-2"
+            inert={!shown}
+            style={{ opacity: shown ? 1 : 0, transition: `opacity ${shown ? '300ms 150ms' : '200ms'} ${MOTION}` }}
+          >
             <FeedList feed={feed} />
           </div>
         </div>
