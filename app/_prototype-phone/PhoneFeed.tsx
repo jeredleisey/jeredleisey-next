@@ -114,14 +114,20 @@ export function PhoneFeed({ feed }: { feed: SplitFeed }) {
     };
   }, [reading, variant]);
 
-  // Variant A: drag the sheet down to close it, by its top edge, or anywhere on the feed
-  // when the feed is already at its top as the finger lands. A drag that starts on a
+  // Variant A: drag the sheet's edge up to open it. Drag the sheet down to close it, by
+  // its top edge, or anywhere on the feed when the feed is already at its top as the
+  // finger lands. A drag that starts on a
   // scrolled feed only scrolls, even when it reaches the top, so one gesture never
   // turns from a scroll into a close.
   const [dragStart, setDragStart] = useState<number | null>(null);
   const [dragging, setDragging] = useState(false);
+  // Down is positive (closing an open sheet), up is negative (opening a closed one).
   const [dragY, setDragY] = useState(0);
   const feedRef = useRef<HTMLDivElement>(null);
+  const edgeStartT = useRef(0);
+  // A drag on the edge must not also count as a tap on the circle.
+  const edgeDragged = useRef(false);
+  const lift = open ? 0 : Math.max(0, -dragY);
 
   useEffect(() => {
     const el = feedRef.current;
@@ -207,30 +213,51 @@ export function PhoneFeed({ feed }: { feed: SplitFeed }) {
                 height: '85dvh',
                 // Closed, only the top 24px of the sheet shows, above the safe area.
                 transform: open
-                  ? `translateY(${dragY}px)`
+                  ? `translateY(${Math.max(0, dragY)}px)`
                   : hidden
                     ? 'translateY(calc(100% + 2rem))'
-                    : 'translateY(calc(100% - 24px - env(safe-area-inset-bottom)))',
+                    : `translateY(calc(100% - 24px - env(safe-area-inset-bottom) - ${lift}px))`,
                 transition: dragStart === null && !dragging ? `transform 400ms ${MOTION}` : 'none',
               }}
             >
               <div
                 className="relative h-12 shrink-0 touch-none"
                 onPointerDown={(e) => {
-                  if (open) setDragStart(e.clientY);
+                  e.currentTarget.setPointerCapture(e.pointerId);
+                  setDragStart(e.clientY);
+                  edgeStartT.current = e.timeStamp;
+                  edgeDragged.current = false;
                 }}
                 onPointerMove={(e) => {
-                  if (dragStart !== null) setDragY(Math.max(0, e.clientY - dragStart));
+                  if (dragStart === null) return;
+                  const dy = e.clientY - dragStart;
+                  if (Math.abs(dy) > 6) edgeDragged.current = true;
+                  // The sheet follows the finger, but never past fully open or fully closed.
+                  const most = window.innerHeight * 0.85;
+                  setDragY(open ? Math.max(0, dy) : Math.max(-most, Math.min(0, dy)));
                 }}
-                onPointerUp={() => {
-                  if (dragStart !== null && dragY > 80) setOpenedAt(null);
+                onPointerUp={(e) => {
+                  if (dragStart === null) return;
+                  const moved = Math.abs(dragY);
+                  const speed = moved / Math.max(1, e.timeStamp - edgeStartT.current);
+                  // A long drag or a fast flick opens or closes. Anything else springs back.
+                  if (edgeDragged.current && (moved > 80 || (moved > 30 && speed > 0.5))) {
+                    setOpenedAt(open ? null : pathname);
+                  }
+                  setDragStart(null);
+                  setDragY(0);
+                }}
+                onPointerCancel={() => {
                   setDragStart(null);
                   setDragY(0);
                 }}
               >
                 <button
                   type="button"
-                  onClick={toggle}
+                  onClick={() => {
+                    if (!edgeDragged.current) toggle();
+                    edgeDragged.current = false;
+                  }}
                   aria-label={open ? 'Close the feed' : 'Open the feed'}
                   aria-expanded={open}
                   className="absolute left-1/2 -top-[18px] -translate-x-1/2"
@@ -244,7 +271,11 @@ export function PhoneFeed({ feed }: { feed: SplitFeed }) {
                 ref={feedRef}
                 className="flex-1 min-h-0 overflow-y-auto overscroll-contain px-5 pl-6 pb-10"
                 inert={!open}
-                style={{ opacity: open ? 1 : 0, transition: `opacity ${open ? '300ms 150ms' : '150ms'} ${MOTION}` }}
+                style={{
+                  // While the edge is lifted, the feed fades in with it.
+                  opacity: open ? 1 : Math.min(1, lift / 250),
+                  transition: dragStart !== null ? 'none' : `opacity ${open ? '300ms 150ms' : '150ms'} ${MOTION}`,
+                }}
               >
                 <FeedList feed={feed} />
               </div>
