@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import { Analytics } from '@vercel/analytics/next';
 import './globals.css';
 import { neueMontreal, newsreader } from './fonts';
 import { FeedPanel } from '@/components/FeedPanel';
@@ -47,6 +48,8 @@ export default function RootLayout({
           <FeedPanel feed={feed} />
           <FeedSheet feed={feed} />
         </ThemeProvider>
+        {/* Vercel Web Analytics, with no cookies. Outside a Vercel deployment its script is not served, so it sends nothing. */}
+        <Analytics />
       </body>
     </html>
   );
