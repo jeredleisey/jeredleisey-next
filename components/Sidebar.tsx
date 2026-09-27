@@ -64,8 +64,11 @@ export function Sidebar() {
         <GlobalNav />
 
 
-        <div className="mt-auto text-my-stone dark:text-my-stone/40 text-xs">
-          © {new Date().getFullYear()}
+        <div className="mt-auto flex gap-3 text-my-stone dark:text-my-stone/40 text-xs">
+          <span>© {new Date().getFullYear()}</span>
+          <Link href="/privacy" className="hover:text-my-walnut dark:hover:text-my-stone transition-colors">
+            Privacy
+          </Link>
         </div>
       </aside>
     </>
