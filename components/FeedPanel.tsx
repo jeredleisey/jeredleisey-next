@@ -1,9 +1,9 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { usePathname } from 'next/navigation';
 import { FeedList } from './home/FeedList';
-import { FEED_MOTION as MOTION, feedMode } from './feedMode';
+import { FEED_MOTION as MOTION, feedMode, isDecisive } from './feedMode';
 import type { SplitFeed } from '@/lib/content';
 
 const PANEL = 'min(38rem, 46vw)';
@@ -20,6 +20,73 @@ export function FeedPanel({ feed }: { feed: SplitFeed }) {
   // The panel remembers the route it opened on, so it closes on any route change.
   const [openedAt, setOpenedAt] = useState<string | null>(null);
   const open = mode === 'closed' && openedAt === pathname;
+  const toggle = () => setOpenedAt(open ? null : pathname);
+
+  // A finger drag in progress on a reading page. Right is positive (closing the open
+  // panel), left is negative (opening the closed one). The panel follows the finger
+  // with no transition. A mouse does not drag: on a desktop, the circle is a button.
+  const [dragStart, setDragStart] = useState<number | null>(null);
+  const [dragX, setDragX] = useState(0);
+  const railStartT = useRef(0);
+  // A drag on the rail must not also count as a tap on the circle.
+  const railDragged = useRef(false);
+  const [feedDragging, setFeedDragging] = useState(false);
+  const feedRef = useRef<HTMLDivElement>(null);
+  const pull = open ? 0 : Math.max(0, -dragX);
+  const dragging = dragStart !== null || feedDragging;
+
+  // A drag right anywhere on the open feed closes the panel. The first 6px of a gesture
+  // decide what it is: a horizontal move to the right is a drag, and anything else is a
+  // scroll for the whole gesture. React attaches touch listeners as passive, and this
+  // one must be able to stop the browser from scrolling, so it is a native listener.
+  useEffect(() => {
+    const el = feedRef.current;
+    if (!el || !open) return;
+    let startX = 0;
+    let startY = 0;
+    let startT = 0;
+    let moved = 0;
+    let mode: 'undecided' | 'drag' | 'scroll' = 'scroll';
+    const onStart = (e: TouchEvent) => {
+      startX = e.touches[0].clientX;
+      startY = e.touches[0].clientY;
+      startT = e.timeStamp;
+      moved = 0;
+      mode = 'undecided';
+    };
+    const onMove = (e: TouchEvent) => {
+      if (mode === 'scroll') return;
+      const dx = e.touches[0].clientX - startX;
+      const dy = e.touches[0].clientY - startY;
+      if (mode === 'undecided') {
+        if (Math.max(Math.abs(dx), Math.abs(dy)) < 6) return;
+        mode = dx > Math.abs(dy) ? 'drag' : 'scroll';
+        if (mode === 'drag') setFeedDragging(true);
+      }
+      if (mode === 'drag') {
+        e.preventDefault();
+        moved = Math.max(0, dx);
+        setDragX(moved);
+      }
+    };
+    const onEnd = (e: TouchEvent) => {
+      if (mode !== 'drag') return;
+      mode = 'scroll';
+      setFeedDragging(false);
+      setDragX(0);
+      if (isDecisive(moved, e.timeStamp - startT)) setOpenedAt(null);
+    };
+    el.addEventListener('touchstart', onStart, { passive: true });
+    el.addEventListener('touchmove', onMove, { passive: false });
+    el.addEventListener('touchend', onEnd);
+    el.addEventListener('touchcancel', onEnd);
+    return () => {
+      el.removeEventListener('touchstart', onStart);
+      el.removeEventListener('touchmove', onMove);
+      el.removeEventListener('touchend', onEnd);
+      el.removeEventListener('touchcancel', onEnd);
+    };
+  }, [open]);
 
   useEffect(() => {
     if (!open) return;
@@ -31,7 +98,16 @@ export function FeedPanel({ feed }: { feed: SplitFeed }) {
   }, [open]);
 
   const shown = mode === 'open' || open;
-  const offset = shown ? '0px' : mode === 'closed' ? `calc(${PANEL} - ${RAIL}${peek ? ` - ${PEEK}` : ''})` : PANEL;
+  // The panel follows the finger, but never past fully open or fully closed.
+  const offset = open
+    ? `min(${Math.max(0, dragX)}px, ${PANEL} - ${RAIL})`
+    : shown
+      ? '0px'
+      : mode !== 'closed'
+        ? PANEL
+        : pull > 0
+          ? `max(0px, ${PANEL} - ${RAIL} - ${pull}px)`
+          : `calc(${PANEL} - ${RAIL}${peek ? ` - ${PEEK}` : ''})`;
 
   return (
     <>
@@ -70,14 +146,47 @@ export function FeedPanel({ feed }: { feed: SplitFeed }) {
           style={{
             width: PANEL,
             transform: `translateX(${offset})`,
-            transition: `transform 450ms ${MOTION}, border-color 200ms ${MOTION}`,
+            transition: dragging
+              ? `border-color 200ms ${MOTION}`
+              : `transform 450ms ${MOTION}, border-color 200ms ${MOTION}`,
           }}
         >
-          <div className="relative w-12 shrink-0">
+          {/* The rail. The circle sits on it, and a finger drag anywhere on it moves the panel. */}
+          <div
+            className={`relative w-12 shrink-0 ${mode === 'closed' ? 'touch-none' : ''}`}
+            onPointerDown={(e) => {
+              if (mode !== 'closed' || e.pointerType === 'mouse') return;
+              e.currentTarget.setPointerCapture?.(e.pointerId);
+              setDragStart(e.clientX);
+              railStartT.current = e.timeStamp;
+              railDragged.current = false;
+            }}
+            onPointerMove={(e) => {
+              if (dragStart === null) return;
+              const dx = e.clientX - dragStart;
+              if (Math.abs(dx) > 6) railDragged.current = true;
+              setDragX(open ? Math.max(0, dx) : Math.min(0, dx));
+            }}
+            onPointerUp={(e) => {
+              if (dragStart === null) return;
+              const dx = e.clientX - dragStart;
+              const moved = open ? dx : -dx;
+              if (railDragged.current && isDecisive(moved, e.timeStamp - railStartT.current)) toggle();
+              setDragStart(null);
+              setDragX(0);
+            }}
+            onPointerCancel={() => {
+              setDragStart(null);
+              setDragX(0);
+            }}
+          >
             {mode === 'closed' && (
               <button
                 type="button"
-                onClick={() => setOpenedAt(open ? null : pathname)}
+                onClick={() => {
+                  if (!railDragged.current) toggle();
+                  railDragged.current = false;
+                }}
                 onMouseEnter={() => setPeek(true)}
                 onMouseLeave={() => setPeek(false)}
                 onFocus={() => setPeek(true)}
@@ -119,9 +228,14 @@ export function FeedPanel({ feed }: { feed: SplitFeed }) {
               panel's edge, and nothing in it takes focus. The left padding keeps the dots
               and year ticks, which sit across the feed's line, inside the scroll area. */}
           <div
-            className="flex-1 min-w-0 overflow-y-auto py-pad-4 pl-2 pr-pad-2"
+            ref={feedRef}
+            className={`flex-1 min-w-0 overflow-y-auto py-pad-4 pl-2 pr-pad-2 ${open ? 'touch-pan-y touch-pinch-zoom' : ''}`}
             inert={!shown}
-            style={{ opacity: shown ? 1 : 0, transition: `opacity ${shown ? '300ms 150ms' : '200ms'} ${MOTION}` }}
+            style={{
+              // While the rail is pulled, the feed fades in with it.
+              opacity: shown ? 1 : Math.min(1, pull / 250),
+              transition: dragging ? 'none' : `opacity ${shown ? '300ms 150ms' : '200ms'} ${MOTION}`,
+            }}
           >
             <FeedList feed={feed} />
           </div>
