@@ -10,11 +10,13 @@ import {
 } from './frontmatter';
 
 const DEFAULT_CONTENT_DIR = path.join(process.cwd(), 'content');
+const DEFAULT_PUBLIC_DIR = path.join(process.cwd(), 'public');
 
 // A photo is a file in public/life/, and src is its path on the site, such as
 // /life/hike.jpg. The frontmatter gives its width and height in pixels, because
 // next/image needs them for a path that is not a static import. On a Mac,
-// `sips -g pixelWidth -g pixelHeight <file>` prints both.
+// `sips -g pixelWidth -g pixelHeight <file>` prints both. When the file is not
+// there, reading the Update fails, so the build fails.
 export interface Photo {
   src: string;
   alt: string;
@@ -40,6 +42,8 @@ export interface Update {
 
 export interface UpdateOptions {
   contentDir?: string;
+  // The folder that the site serves at /. Each photo must be a file in it.
+  publicDir?: string;
   includeDrafts?: boolean;
 }
 
@@ -54,13 +58,13 @@ function updateFiles(contentDir: string): string[] {
     .map((f) => path.join(dir, f));
 }
 
-function readUpdate(filePath: string): Update {
+function readUpdate(filePath: string, publicDir: string): Update {
   const file = readMdxFile(filePath);
   return {
     slug: path.basename(filePath, '.mdx'),
     date: requiredDate(file, 'date'),
     title: optionalString(file, 'title'),
-    photos: photosOf(file),
+    photos: photosOf(file, publicDir),
     link: linkOf(file),
     draft: optionalBoolean(file, 'draft'),
     content: file.content,
@@ -82,7 +86,23 @@ function isLifePath(value: unknown): value is string {
   );
 }
 
-function photosOf(file: MdxFile): Photo[] {
+// True when the site path names a file in the public folder. Each part of the path
+// must match a name in its folder exactly. A Mac finds hike.png as Hike.png, but the
+// live site does not, so a match that ignores letter case is not a match.
+function isPublicFile(publicDir: string, sitePath: string): boolean {
+  const parts = sitePath.split('/').filter((part) => part !== '');
+  if (!fs.existsSync(publicDir)) return false;
+  let dir = publicDir;
+  for (const [i, part] of parts.entries()) {
+    const entry = fs.readdirSync(dir, { withFileTypes: true }).find((e) => e.name === part);
+    if (i === parts.length - 1) return entry?.isFile() ?? false;
+    if (!entry?.isDirectory()) return false;
+    dir = path.join(dir, part);
+  }
+  return false;
+}
+
+function photosOf(file: MdxFile, publicDir: string): Photo[] {
   const value = file.data.photos;
   if (value === undefined || value === null) return [];
   if (!Array.isArray(value) || !value.every(isRecord)) {
@@ -101,6 +121,10 @@ function photosOf(file: MdxFile): Photo[] {
       if (typeof size !== 'number' || !Number.isInteger(size) || size <= 0) {
         throw problem(`"${side}" must be a whole number of pixels`);
       }
+    }
+    if (!isPublicFile(publicDir, photo.src)) {
+      const photoFile = path.relative(process.cwd(), path.join(publicDir, photo.src));
+      throw problem(`"src" ${photo.src} has no file at ${photoFile}`);
     }
     return {
       src: photo.src,
@@ -140,20 +164,25 @@ function isWebUrl(value: unknown): value is string {
 
 export function getUpdates({
   contentDir = DEFAULT_CONTENT_DIR,
+  publicDir = DEFAULT_PUBLIC_DIR,
   includeDrafts = false,
 }: UpdateOptions = {}): Update[] {
   return updateFiles(contentDir)
-    .map(readUpdate)
+    .map((f) => readUpdate(f, publicDir))
     .filter((u) => includeDrafts || !u.draft)
     .sort((a, b) => b.date.getTime() - a.date.getTime());
 }
 
 export function getUpdate(
   slug: string,
-  { contentDir = DEFAULT_CONTENT_DIR, includeDrafts = false }: UpdateOptions = {},
+  {
+    contentDir = DEFAULT_CONTENT_DIR,
+    publicDir = DEFAULT_PUBLIC_DIR,
+    includeDrafts = false,
+  }: UpdateOptions = {},
 ): Update | null {
   const file = updateFiles(contentDir).find((f) => path.basename(f, '.mdx') === slug);
   if (!file) return null;
-  const update = readUpdate(file);
+  const update = readUpdate(file, publicDir);
   return includeDrafts || !update.draft ? update : null;
 }

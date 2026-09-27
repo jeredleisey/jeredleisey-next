@@ -4,6 +4,8 @@ import { getFeed, splitFeed, type FeedItem } from '@/lib/content';
 import type { Project } from '@/lib/projects';
 
 const contentDir = path.join(__dirname, '../fixtures/content');
+// The photo of an Update is a file next to it in the fixture folder.
+const publicDir = contentDir;
 
 const projects: Project[] = [
   {
@@ -18,7 +20,7 @@ const projects: Project[] = [
 
 describe('getFeed', () => {
   it('merges Projects, Posts, and Updates, newest first, and tags each with its kind', () => {
-    const feed = getFeed({ contentDir, projects });
+    const feed = getFeed({ contentDir, publicDir, projects });
     expect(feed.map((item) => [item.kind, item.slug])).toEqual([
       ['update', 'full-update'],
       ['post', 'newer-post'],
@@ -30,7 +32,7 @@ describe('getFeed', () => {
   });
 
   it('links each item to its own page', () => {
-    const feed = getFeed({ contentDir, projects });
+    const feed = getFeed({ contentDir, publicDir, projects });
     const hrefs = Object.fromEntries(feed.map((item) => [item.slug, item.href]));
     expect(hrefs['demo']).toBe('/projects/demo');
     expect(hrefs['newer-post']).toBe('/dispatches/newer-post');
@@ -38,18 +40,18 @@ describe('getFeed', () => {
   });
 
   it('leaves out Drafts unless Drafts are asked for', () => {
-    expect(getFeed({ contentDir, projects }).map((i) => i.slug)).not.toContain('draft-post');
-    const withDrafts = getFeed({ contentDir, projects, includeDrafts: true }).map((i) => i.slug);
+    expect(getFeed({ contentDir, publicDir, projects }).map((i) => i.slug)).not.toContain('draft-post');
+    const withDrafts = getFeed({ contentDir, publicDir, projects, includeDrafts: true }).map((i) => i.slug);
     expect(withDrafts.slice(0, 3)).toEqual(['draft-update', 'full-update', 'draft-post']);
   });
 
   it('returns at most the given number of items', () => {
-    const feed = getFeed({ contentDir, projects, limit: 2 });
+    const feed = getFeed({ contentDir, publicDir, projects, limit: 2 });
     expect(feed.map((i) => i.slug)).toEqual(['full-update', 'newer-post']);
   });
 
   it('summarizes an Update by its text, and keeps its title when it has one', () => {
-    const feed = getFeed({ contentDir, projects });
+    const feed = getFeed({ contentDir, publicDir, projects });
     const plain = feed.find((i) => i.slug === 'plain-update');
     expect(plain?.title).toBeUndefined();
     expect(plain?.summary).toBe('A plain Update with no title, photos, or link.');
@@ -57,7 +59,7 @@ describe('getFeed', () => {
   });
 
   it('gives an Update its first photo, and an Update with no photo none', () => {
-    const feed = getFeed({ contentDir, projects });
+    const feed = getFeed({ contentDir, publicDir, projects });
     expect(feed.find((i) => i.slug === 'full-update')?.photo).toEqual({
       src: '/life/full-update.png',
       alt: 'A small orange square',
@@ -68,7 +70,7 @@ describe('getFeed', () => {
   });
 
   it('gives a Post in a Series the title of its Series, and a Post in no Series none', () => {
-    const feed = getFeed({ contentDir, projects });
+    const feed = getFeed({ contentDir, publicDir, projects });
     // some-series has no series file, so its title comes from its slug.
     expect(feed.find((i) => i.slug === 'middle-post')?.seriesTitle).toBe('Some Series');
     expect(feed.find((i) => i.slug === 'newer-post')?.seriesTitle).toBeUndefined();
