@@ -11,4 +11,5 @@ export type { Series, SeriesPart } from './series';
 export { getUpdate, getUpdates } from './updates';
 export type { Update, UpdateOptions } from './updates';
 export { getFeed, splitFeed } from './feed';
+export { readingMinutes } from './reading';
 export type { FeedItem, FeedKind, FeedOptions, FeedYear, SplitFeed } from './feed';
