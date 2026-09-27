@@ -11,3 +11,34 @@ body {
   height: 100%;
   margin: 0;
 }
+
+/* Page transitions (components/PageTransitions.tsx). Old content leaves fast. A reading
+   page arrives after it with a short rise. The layout, with the sidebar and the feed
+   panel, does not cross-fade. */
+:root {
+  --motion-ease: cubic-bezier(0.2, 0, 0, 1);
+}
+
+::view-transition-group(root) { animation: none; }
+::view-transition-old(root) { display: none; }
+::view-transition-new(root) { animation: none; }
+
+::view-transition-old(.home-out),
+::view-transition-old(.reading-out) { animation: 150ms ease-in both fade-in reverse; }
+::view-transition-new(.reading-in) {
+  animation: 250ms var(--motion-ease) 150ms both fade-in, 350ms var(--motion-ease) 150ms both rise-in;
+}
+::view-transition-new(.home-in) { animation: 250ms var(--motion-ease) 100ms both fade-in; }
+
+@keyframes fade-in { from { opacity: 0; } to { opacity: 1; } }
+@keyframes rise-in { from { translate: 0 8px; } to { translate: 0 0; } }
+
+@media (prefers-reduced-motion: reduce) {
+  ::view-transition-group(*),
+  ::view-transition-old(*),
+  ::view-transition-new(*) { animation: none !important; }
+
+  /* The feed panel sets its transitions inline. */
+  [data-feed-panel],
+  [data-feed-panel] * { transition: none !important; }
+}
