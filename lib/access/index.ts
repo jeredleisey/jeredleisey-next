@@ -103,10 +103,19 @@ function normalizeEmail(email: string) {
   return email.trim().toLowerCase();
 }
 
+// A new Access Request, as the Admin notification tells it.
+export interface NewAccessRequest {
+  user: { name: string; email: string };
+  project: string;
+  note: string | null;
+}
+
 export interface AccessConfig {
   adminEmail: string | undefined;
   // The clock for the time rules. Tests pass their own.
   now?: () => Date;
+  // Runs after each new Access Request is saved, to tell the Admin.
+  onNewRequest?: (request: NewAccessRequest) => Promise<void>;
 }
 
 export function createAccess(db: SiteDb, config: AccessConfig) {
@@ -173,8 +182,21 @@ export function createAccess(db: SiteDb, config: AccessConfig) {
       })
       // The partial unique index allows one pending request per User and Project.
       .onConflictDoNothing()
-      .returning({ id: accessRequest.id });
+      .returning({ id: accessRequest.id, note: accessRequest.note });
     if (!row) return { ok: false, reason: 'pending' };
+    // The request is saved. A notice that fails is only logged, so it never costs the
+    // User the request. The User sees its state on the site either way.
+    if (config.onNewRequest) {
+      try {
+        const [who] = await db
+          .select({ name: userTable.name, email: userTable.email })
+          .from(userTable)
+          .where(eq(userTable.id, user.id));
+        await config.onNewRequest({ user: who, project, note: row.note });
+      } catch (err) {
+        console.error('The notice about a new Access Request failed:', err);
+      }
+    }
     return { ok: true, requestId: row.id };
   }
 

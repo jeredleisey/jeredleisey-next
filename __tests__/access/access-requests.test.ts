@@ -198,4 +198,50 @@ describe('Access Requests', () => {
     expect(pending.find((r) => r.user.id === blank.id)?.note).toBeNull();
     expect(pending.find((r) => r.user.id === long.id)?.note).toHaveLength(500);
   });
+
+  it('tells the Admin about each new Access Request', async () => {
+    const db = await createTestDb();
+    const sent: unknown[] = [];
+    const access = createAccess(db, {
+      adminEmail: ADMIN_EMAIL,
+      onNewRequest: async (request) => {
+        sent.push(request);
+      },
+    });
+    const u = await createUser(db, { email: 'colleague@example.com' });
+    await access.requestAccess(u, 'jev', 'I test prompts at work.');
+    expect(sent).toEqual([
+      { user: { name: u.name, email: 'colleague@example.com' }, project: 'jev', note: 'I test prompts at work.' },
+    ]);
+  });
+
+  it('keeps the Access Request when the notice to the Admin fails', async () => {
+    const db = await createTestDb();
+    const access = createAccess(db, {
+      adminEmail: ADMIN_EMAIL,
+      onNewRequest: async () => {
+        throw new Error('The email service is down.');
+      },
+    });
+    const u = await createUser(db);
+    const result = await access.requestAccess(u, 'jev');
+    expect(result.ok).toBe(true);
+    expect(await access.accessFor(u, 'jev')).toEqual({ status: 'pending' });
+  });
+
+  it('tells the Admin nothing about a refused request', async () => {
+    const db = await createTestDb();
+    let notices = 0;
+    const access = createAccess(db, {
+      adminEmail: ADMIN_EMAIL,
+      onNewRequest: async () => {
+        notices += 1;
+      },
+    });
+    const u = await createUser(db);
+    await access.requestAccess(u, 'jev');
+    await access.requestAccess(u, 'jev');
+    expect(notices).toBe(1);
+  });
 });
+
