@@ -4,6 +4,11 @@ import { neueMontreal, newsreader } from './fonts';
 import { Sidebar } from '@/components/Sidebar';
 import { ThemeProvider } from '@/components/ThemeProvider';
 import { themeScript } from '@/lib/theme';
+import { getFeed, splitFeed } from '@/lib/content';
+// PROTOTYPE (feed panel).
+import { FeedPanel } from './_prototype-transition/FeedPanel';
+
+const FEED_LENGTH = 12;
 
 export const metadata: Metadata = {
   title: 'Jered Leisey',
@@ -18,6 +23,7 @@ export default function RootLayout({
 }: {
   children: React.ReactNode;
 }) {
+  const feed = splitFeed(getFeed({ includeDrafts: process.env.NODE_ENV === 'development', limit: FEED_LENGTH }));
 
   return (
     // The inline theme script changes <html>'s class before hydration.
@@ -29,7 +35,7 @@ export default function RootLayout({
       <head>
         <script dangerouslySetInnerHTML={{ __html: themeScript }} />
       </head>
-      <body className="h-full bg-my-cream dark:bg-my-espresso font-neue-montreal flex transition-colors duration-200">
+      <body className="h-full overflow-hidden bg-my-cream dark:bg-my-espresso font-neue-montreal flex transition-colors duration-200">
         <ThemeProvider>
           <Sidebar />
           {/* relative: keeps absolutely positioned children (such as sr-only
@@ -37,6 +43,7 @@ export default function RootLayout({
           <main className="relative flex-1 overflow-y-auto pt-14 md:pt-0">
             {children}
           </main>
+          <FeedPanel feed={feed} />
         </ThemeProvider>
       </body>
     </html>

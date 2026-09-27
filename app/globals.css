@@ -11,3 +11,31 @@ body {
   height: 100%;
   margin: 0;
 }
+
+/* PROTOTYPE (feed panel). Throwaway. Not for main.
+   The home page content fades out fast. A reading page rises in from 150ms. The feed panel
+   moves with plain CSS transitions (components/FeedPanel.tsx), not with a view transition. */
+:root {
+  --vt-ease: cubic-bezier(0.2, 0, 0, 1);
+}
+
+/* The layout (the sidebar, the panel, and the background) does not cross-fade. */
+::view-transition-group(root) { animation: none; }
+::view-transition-old(root) { display: none; }
+::view-transition-new(root) { animation: none; }
+
+::view-transition-old(.feed-out) { animation: 150ms ease-in both vt-fade reverse; }
+::view-transition-new(.page-in) {
+  animation: 250ms var(--vt-ease) 150ms both vt-fade, 350ms var(--vt-ease) 150ms both vt-rise;
+}
+::view-transition-old(.page-out) { animation: 150ms ease-in both vt-fade reverse; }
+::view-transition-new(.feed-in) { animation: 250ms var(--vt-ease) 100ms both vt-fade; }
+
+@keyframes vt-fade { from { opacity: 0; } to { opacity: 1; } }
+@keyframes vt-rise { from { translate: 0 8px; } to { translate: 0 0; } }
+
+@media (prefers-reduced-motion: reduce) {
+  ::view-transition-group(*),
+  ::view-transition-old(*),
+  ::view-transition-new(*) { animation: none !important; }
+}

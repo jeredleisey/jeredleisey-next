@@ -1,5 +1,7 @@
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
+// PROTOTYPE (feed panel).
+import { ReadingTransition } from '@/app/_prototype-transition/Transitions';
 import { MDXRemote } from 'next-mdx-remote-client/rsc';
 import { getPost, getPosts, getSeriesPart } from '@/lib/content';
 import { formatDate } from '@/lib/format';
@@ -50,6 +52,7 @@ export default async function PostPage({ params }: Props) {
   const part = getSeriesPart(slug, { includeDrafts });
 
   return (
+    <ReadingTransition>
     <div className="p-pad-2 max-w-2xl">
       <div className="mb-8">
         <p className="text-my-walnut dark:text-my-stone text-xs uppercase tracking-widest mb-3">
@@ -119,5 +122,6 @@ export default async function PostPage({ params }: Props) {
         </nav>
       )}
     </div>
+    </ReadingTransition>
   );
 }

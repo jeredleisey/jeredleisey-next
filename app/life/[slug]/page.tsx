@@ -1,4 +1,6 @@
 import { notFound } from 'next/navigation';
+// PROTOTYPE (feed panel).
+import { ReadingTransition } from '@/app/_prototype-transition/Transitions';
 import { UpdateBody } from '@/components/life/UpdateBody';
 import { getUpdate, getUpdates } from '@/lib/content';
 import { formatDate } from '@/lib/format';
@@ -29,6 +31,7 @@ export default async function UpdatePage({ params }: Props) {
   if (!update) notFound();
 
   return (
+    <ReadingTransition>
     <div className="p-pad-2 max-w-2xl">
       <div className="mb-8">
         <p className="text-my-walnut dark:text-my-stone text-xs uppercase tracking-widest mb-3">
@@ -45,5 +48,6 @@ export default async function UpdatePage({ params }: Props) {
 
       <UpdateBody update={update} />
     </div>
+    </ReadingTransition>
   );
 }
