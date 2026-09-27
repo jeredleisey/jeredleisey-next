@@ -1,6 +1,12 @@
 import Link from 'next/link';
 import { getFeed, type FeedKind } from '@/lib/content';
 import { formatDate } from '@/lib/format';
+// PROTOTYPE (#57). Throwaway: the variants and the switcher never go to main.
+import { PrototypeSwitcher } from '@/components/PrototypeSwitcher';
+import { withSamples } from './_prototype-home/sample-feed';
+import { VariantA, nameA } from './_prototype-home/VariantA';
+import { VariantB, nameB } from './_prototype-home/VariantB';
+import { VariantC, nameC } from './_prototype-home/VariantC';
 
 export const metadata = { title: 'Jered Leisey' };
 
@@ -13,9 +19,36 @@ const KIND_LABEL: Record<FeedKind, string> = {
 
 const FEED_LENGTH = 12;
 
-export default function HomePage() {
-  const feed = getFeed({ includeDrafts: process.env.NODE_ENV === 'development', limit: FEED_LENGTH });
+// PROTOTYPE (#57): three home page variants on this route, chosen by ?variant=.
+const VARIANTS = [
+  { key: '0', name: 'Current' },
+  { key: 'A', name: nameA },
+  { key: 'B', name: nameB },
+  { key: 'C', name: nameC },
+];
 
+export default async function HomePage({
+  searchParams,
+}: {
+  searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
+}) {
+  const raw = (await searchParams).variant;
+  const variant = VARIANTS.some((v) => v.key === raw) ? (raw as string) : 'A';
+  const feed = getFeed({ includeDrafts: process.env.NODE_ENV === 'development', limit: FEED_LENGTH });
+  const items = withSamples(feed).slice(0, FEED_LENGTH);
+
+  return (
+    <>
+      {variant === 'A' && <VariantA items={items} />}
+      {variant === 'B' && <VariantB items={items} />}
+      {variant === 'C' && <VariantC items={items} />}
+      {variant === '0' && <CurrentHome feed={feed} />}
+      <PrototypeSwitcher variants={VARIANTS} current={variant} />
+    </>
+  );
+}
+
+function CurrentHome({ feed }: { feed: ReturnType<typeof getFeed> }) {
   return (
     <div className="h-full flex flex-col p-pad-2">
       {/* Placeholder: Jered writes the real sentence. */}
