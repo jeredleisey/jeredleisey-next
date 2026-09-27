@@ -12,7 +12,8 @@ function Sample({ on }: { on?: boolean }) {
   return on ? <span className="ml-2 text-[10px] uppercase tracking-widest text-my-stone">sample</span> : null;
 }
 
-function Entry({ item }: { item: ProtoItem }) {
+// Variant D uses this too.
+export function Entry({ item }: { item: ProtoItem }) {
   if (item.kind === 'project') {
     return (
       <Link href={item.href} className="group block border border-my-espresso/70 dark:border-my-cream/40 p-5">

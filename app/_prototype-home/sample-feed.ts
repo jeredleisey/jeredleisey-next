@@ -80,6 +80,33 @@ export const SAMPLE_ITEMS: ProtoItem[] = [
     date: d('2025-12-03'),
     sample: true,
   },
+  {
+    kind: 'update',
+    slug: 'sample-amp',
+    href: '#',
+    title: 'The Fender is back',
+    summary: 'New tubes, same tweed. It sounds like 1962 again.',
+    date: d('2025-08-17'),
+    sample: true,
+  },
+  {
+    kind: 'post',
+    slug: 'sample-sharepoint',
+    href: '#',
+    title: 'SharePoint lists are a database until they are not',
+    summary: 'Where the 5,000 item view limit bites, and what to move to first.',
+    date: d('2025-03-09'),
+    sample: true,
+  },
+  {
+    kind: 'project',
+    slug: 'sample-old-site',
+    href: '#',
+    title: 'The first jeredleisey.com',
+    summary: 'The site before this one.',
+    date: d('2024-11-02'),
+    sample: true,
+  },
 ];
 
 export function withSamples(real: FeedItem[]): ProtoItem[] {

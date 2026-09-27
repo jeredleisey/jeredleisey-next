@@ -7,6 +7,7 @@ import { withSamples } from './_prototype-home/sample-feed';
 import { VariantA, nameA } from './_prototype-home/VariantA';
 import { VariantB, nameB } from './_prototype-home/VariantB';
 import { VariantC, nameC } from './_prototype-home/VariantC';
+import { VariantD, nameD } from './_prototype-home/VariantD';
 
 export const metadata = { title: 'Jered Leisey' };
 
@@ -19,12 +20,13 @@ const KIND_LABEL: Record<FeedKind, string> = {
 
 const FEED_LENGTH = 12;
 
-// PROTOTYPE (#57): three home page variants on this route, chosen by ?variant=.
+// PROTOTYPE (#57): four home page variants on this route, chosen by ?variant=.
 const VARIANTS = [
   { key: '0', name: 'Current' },
   { key: 'A', name: nameA },
   { key: 'B', name: nameB },
   { key: 'C', name: nameC },
+  { key: 'D', name: nameD },
 ];
 
 export default async function HomePage({
@@ -42,6 +44,7 @@ export default async function HomePage({
       {variant === 'A' && <VariantA items={items} />}
       {variant === 'B' && <VariantB items={items} />}
       {variant === 'C' && <VariantC items={items} />}
+      {variant === 'D' && <VariantD items={items} />}
       {variant === '0' && <CurrentHome feed={feed} />}
       <PrototypeSwitcher variants={VARIANTS} current={variant} />
     </>
