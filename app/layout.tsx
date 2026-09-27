@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import './globals.css';
 import { neueMontreal, newsreader } from './fonts';
 import { FeedPanel } from '@/components/FeedPanel';
+import { FeedSheet } from '@/components/FeedSheet';
 import { Sidebar } from '@/components/Sidebar';
 import { ThemeProvider } from '@/components/ThemeProvider';
 import { getFeed, splitFeed } from '@/lib/content';
@@ -42,8 +43,9 @@ export default function RootLayout({
           <main className="relative flex-1 overflow-y-auto pt-14 md:pt-0">
             {children}
           </main>
-          {/* On large screens the feed is a panel that survives navigation. */}
+          {/* The feed survives navigation: a panel from 768px, a sheet on a phone. */}
           <FeedPanel feed={feed} />
+          <FeedSheet feed={feed} />
         </ThemeProvider>
       </body>
     </html>
