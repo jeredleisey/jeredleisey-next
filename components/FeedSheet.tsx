@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { usePathname } from 'next/navigation';
-import { FEED_MOTION as MOTION, feedMode } from './feedMode';
+import { FEED_MOTION as MOTION, feedMode, isDecisive } from './feedMode';
 import { FeedList } from './home/FeedList';
 import type { SplitFeed } from '@/lib/content';
 
@@ -10,10 +10,6 @@ import type { SplitFeed } from '@/lib/content';
 const EDGE = '24px';
 // The open sheet covers this much of the screen.
 const HEIGHT = 0.85;
-// A drag longer than this, or a flick, opens or closes the sheet. Anything else springs back.
-const DRAG_PX = 80;
-const FLICK_PX = 30;
-const FLICK_SPEED = 0.5; // pixels per millisecond
 
 // True while the reader scrolls the page down, false again on any scroll up. The page
 // scrolls inside <main>, not the window. A new route starts shown.
@@ -33,10 +29,6 @@ function useScrollingDown(pathname: string) {
     return () => main.removeEventListener('scroll', onScroll);
   }, [pathname]);
   return downOn === pathname;
-}
-
-function isDecisive(moved: number, ms: number) {
-  return moved > DRAG_PX || (moved > FLICK_PX && moved / Math.max(1, ms) > FLICK_SPEED);
 }
 
 // The feed on a phone (narrower than 768px), on the page of one Post, Update, or
