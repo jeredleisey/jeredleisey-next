@@ -20,6 +20,8 @@ export interface FeedItem {
 }
 
 export interface FeedOptions extends PostOptions {
+  // The folder that holds the photos of Updates. See UpdateOptions.
+  publicDir?: string;
   limit?: number;
   // The Project registry by default. Tests pass their own Projects.
   projects?: readonly Project[];
@@ -39,7 +41,13 @@ function excerpt(mdx: string): string {
 }
 
 // The latest items across Projects, Posts, and Updates, newest first.
-export function getFeed({ contentDir, includeDrafts, limit, projects = PROJECTS }: FeedOptions = {}): FeedItem[] {
+export function getFeed({
+  contentDir,
+  publicDir,
+  includeDrafts,
+  limit,
+  projects = PROJECTS,
+}: FeedOptions = {}): FeedItem[] {
   const seriesTitles = new Map(getAllSeries({ contentDir, includeDrafts }).map((s) => [s.slug, s.title]));
   const items: FeedItem[] = [
     ...projects.map((p) => ({
@@ -59,7 +67,7 @@ export function getFeed({ contentDir, includeDrafts, limit, projects = PROJECTS 
       date: p.date,
       ...(p.series && { seriesTitle: seriesTitles.get(p.series) }),
     })),
-    ...getUpdates({ contentDir, includeDrafts }).map((u) => ({
+    ...getUpdates({ contentDir, publicDir, includeDrafts }).map((u) => ({
       kind: 'update' as const,
       slug: u.slug,
       href: `/life/${u.slug}`,
