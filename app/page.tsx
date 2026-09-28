@@ -10,15 +10,23 @@ const FEED_LENGTH = 12;
 // open on this page. On a phone it runs under the sentence. The design comes from
 // #57, #77, and #78.
 export default function HomePage() {
-  const feed = splitFeed(getFeed({ includeDrafts: process.env.NODE_ENV === 'development', limit: FEED_LENGTH }));
+  const feed = splitFeed(
+    getFeed({
+      includeDrafts: process.env.NODE_ENV === 'development',
+      limit: FEED_LENGTH,
+    })
+  );
 
   return (
     <HomeTransition>
       <div className="px-pad-2 py-pad-4">
         <p className="font-serif font-light text-4xl xl:text-5xl leading-[1.1] text-my-espresso dark:text-my-cream max-w-md">
-          I build software that takes repetitive work off people&apos;s desks. Lately, a lot of it runs on AI agents.
+          Hi, I'm Jered Leisey, a full-stack automation developer. I build
+          software that takes repetitive work off people&apos;s desks.
         </p>
-        <p className="mt-6 text-xs text-my-walnut dark:text-my-stone">Latest work and life, newest first.</p>
+        <p className="mt-6 text-xs text-my-walnut dark:text-my-stone">
+          Check out my latest work and life.
+        </p>
 
         <div className="mt-pad-4 md:hidden">
           <FeedList feed={feed} />
