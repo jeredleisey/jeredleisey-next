@@ -102,79 +102,34 @@ export function OptionsPanel({
     }
   }
 
+  // Wide screens: the Model and Run row and the options on the left, the results on the
+  // right, in view while the options scroll. Narrow screens: the row, the results, then
+  // the options, so a User scrolls down only to change the options (#94).
   return (
-    <div className="flex flex-col gap-pad-2">
-      <div>
+    <div className="grid gap-pad-2 lg:grid-cols-2 lg:items-start">
+      <div className="lg:col-start-1 lg:row-start-1">
         <label htmlFor="jev-model" className={label}>
           Model
         </label>
-        <input
-          id="jev-model"
-          value={model}
-          onChange={(e) => setModel(e.target.value)}
-          spellCheck={false}
-          className={`${input} font-mono`}
-          {...errorProps('jev-model-error', errors.model)}
-        />
+        <div className="flex items-stretch gap-3">
+          <input
+            id="jev-model"
+            value={model}
+            onChange={(e) => setModel(e.target.value)}
+            spellCheck={false}
+            className={`${input} font-mono min-w-0 flex-1`}
+            {...errorProps('jev-model-error', errors.model)}
+          />
+          <button
+            type="button"
+            onClick={onRun}
+            disabled={pending}
+            className={`${box} shrink-0 px-6 text-sm uppercase tracking-widest text-my-espresso dark:text-my-cream hover:border-my-orange hover:text-my-orange disabled:opacity-50 disabled:hover:border-my-stone/40 disabled:hover:text-my-espresso transition-colors`}
+          >
+            {pending ? 'Running…' : 'Run'}
+          </button>
+        </div>
         <FieldError id="jev-model-error" message={errors.model} />
-      </div>
-
-      <div>
-        <label htmlFor="jev-state" className={label}>
-          State
-        </label>
-        <fieldset className="flex gap-4 mb-2">
-          <legend className="sr-only">Format</legend>
-          {(
-            [
-              ['text', 'Plain text'],
-              ['json', 'JSON'],
-            ] as const
-          ).map(([mode, name]) => (
-            <label
-              key={mode}
-              className="flex items-center gap-2 text-sm font-light text-my-espresso dark:text-my-cream"
-            >
-              <input
-                type="radio"
-                name="jev-state-mode"
-                value={mode}
-                checked={stateMode === mode}
-                onChange={() => setStateMode(mode)}
-                className="accent-my-orange"
-              />
-              {name}
-            </label>
-          ))}
-        </fieldset>
-        <textarea
-          id="jev-state"
-          value={state}
-          onChange={(e) => setState(e.target.value)}
-          rows={stateMode === 'json' ? 8 : 4}
-          spellCheck={stateMode === 'text'}
-          className={`${input} ${stateMode === 'json' ? 'font-mono' : ''}`}
-          {...errorProps('jev-state-error', errors.state)}
-        />
-        <FieldError id="jev-state-error" message={errors.state} />
-      </div>
-
-      <QuestionBuilder
-        questions={questions}
-        errors={errors.questions}
-        listError={errors.list}
-        onChange={setQuestions}
-      />
-
-      <div>
-        <button
-          type="button"
-          onClick={onRun}
-          disabled={pending}
-          className={`${box} px-6 py-3 text-sm uppercase tracking-widest text-my-espresso dark:text-my-cream hover:border-my-orange hover:text-my-orange disabled:opacity-50 disabled:hover:border-my-stone/40 disabled:hover:text-my-espresso transition-colors`}
-        >
-          {pending ? 'Running…' : 'Run'}
-        </button>
         {runsLeft !== undefined && (
           <p className="mt-3 text-xs text-my-walnut dark:text-my-stone">
             {runsLeft === null ? 'No Run limit on your account.' : runsLeftText(runsLeft)}
@@ -182,24 +137,75 @@ export function OptionsPanel({
         )}
       </div>
 
-      {checked && !built.ok && (
-        <p
-          role="alert"
-          className="border border-my-orange p-4 text-sm text-my-orange"
-        >
-          Fix the problems marked above, then Run again.
-        </p>
-      )}
+      {/* The result column. RunResults names its own Results region. */}
+      <div className="flex flex-col gap-4 lg:col-start-2 lg:row-start-1 lg:row-span-2 lg:sticky lg:top-pad-2"
+      >
+        {checked && !built.ok && (
+          <p role="alert" className="border border-my-orange p-4 text-sm text-my-orange">
+            Fix the problems marked in the options, then Run again.
+          </p>
+        )}
+        {result && !result.ok && (
+          <p role="alert" className="border border-my-orange p-4 text-sm text-my-orange">
+            {result.error.message}
+          </p>
+        )}
+        {result?.ok && <RunResults response={result.response} />}
+        {!result && !(checked && !built.ok) && (
+          <p className="border border-dashed border-my-stone/50 dark:border-my-stone/25 p-6 text-sm font-light text-my-walnut dark:text-my-stone">
+            {pending ? 'Running…' : 'The results of a Run show here.'}
+          </p>
+        )}
+      </div>
 
-      {result && !result.ok && (
-        <p
-          role="alert"
-          className="border border-my-orange p-4 text-sm text-my-orange"
-        >
-          {result.error.message}
-        </p>
-      )}
-      {result?.ok && <RunResults response={result.response} />}
+      <div className="flex flex-col gap-pad-2 lg:col-start-1 lg:row-start-2">
+        <div>
+          <label htmlFor="jev-state" className={label}>
+            State
+          </label>
+          <fieldset className="flex gap-4 mb-2">
+            <legend className="sr-only">Format</legend>
+            {(
+              [
+                ['text', 'Plain text'],
+                ['json', 'JSON'],
+              ] as const
+            ).map(([mode, name]) => (
+              <label
+                key={mode}
+                className="flex items-center gap-2 text-sm font-light text-my-espresso dark:text-my-cream"
+              >
+                <input
+                  type="radio"
+                  name="jev-state-mode"
+                  value={mode}
+                  checked={stateMode === mode}
+                  onChange={() => setStateMode(mode)}
+                  className="accent-my-orange"
+                />
+                {name}
+              </label>
+            ))}
+          </fieldset>
+          <textarea
+            id="jev-state"
+            value={state}
+            onChange={(e) => setState(e.target.value)}
+            rows={stateMode === 'json' ? 8 : 4}
+            spellCheck={stateMode === 'text'}
+            className={`${input} ${stateMode === 'json' ? 'font-mono' : ''}`}
+            {...errorProps('jev-state-error', errors.state)}
+          />
+          <FieldError id="jev-state-error" message={errors.state} />
+        </div>
+
+        <QuestionBuilder
+          questions={questions}
+          errors={errors.questions}
+          listError={errors.list}
+          onChange={setQuestions}
+        />
+      </div>
     </div>
   );
 }

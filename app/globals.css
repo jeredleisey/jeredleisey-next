@@ -54,3 +54,6 @@ body {
   }
   main:has(~ [data-feed-sheet]) { padding-bottom: 3rem; }
 }
+
+/* The Jev easter egg (components/jev/JevTitle.tsx) arrives with a short rise. */
+@keyframes jev-egg { from { opacity: 0; translate: 0 12px; } }
