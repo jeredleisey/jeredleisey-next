@@ -1,5 +1,6 @@
 import { redirect } from 'next/navigation';
 import { AccessSplash } from '@/components/AccessSplash';
+import { JevTitle } from '@/components/jev/JevTitle';
 import { OptionsPanel } from '@/components/jev/OptionsPanel';
 import { getAccess, getSessionUser } from '@/lib/access/server';
 import { getJevLimits } from '@/lib/jev/server';
@@ -20,9 +21,9 @@ export default async function JevProjectPage() {
   const runsLeft = await (await getJevLimits()).runsLeft(user);
 
   return (
-    <div className="p-pad-2 max-w-2xl">
-      <h1 className="text-2xl font-light text-my-espresso dark:text-my-cream mb-3">{project.title}</h1>
-      <p className="text-my-walnut dark:text-my-stone text-sm leading-relaxed mb-pad-2">{project.description}</p>
+    <div className="p-pad-2 max-w-6xl">
+      <JevTitle title={project.title} className="text-2xl font-light text-my-espresso dark:text-my-cream mb-3" />
+      <p className="text-my-walnut dark:text-my-stone text-sm leading-relaxed mb-pad-2 max-w-2xl">{project.description}</p>
       <OptionsPanel runsLeft={runsLeft} />
     </div>
   );
