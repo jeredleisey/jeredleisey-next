@@ -12,6 +12,8 @@ import { themeScript } from '@/lib/theme';
 const FEED_LENGTH = 12;
 
 export const metadata: Metadata = {
+  // Share cards need an absolute URL for app/opengraph-image.png.
+  metadataBase: new URL('https://jeredleisey.com'),
   title: 'Jered Leisey',
   description: "Whatever I'm into, I'm all the way in.",
   icons: {
