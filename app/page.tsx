@@ -21,7 +21,7 @@ export default function HomePage() {
     <HomeTransition>
       <div className="px-pad-2 py-pad-4">
         <p className="font-serif font-light text-4xl xl:text-5xl leading-[1.1] text-my-espresso dark:text-my-cream max-w-md">
-          Hi, I'm Jered Leisey, a full-stack automation developer. I build
+          Hi, I&apos;m Jered Leisey, a full-stack automation developer. I build
           software that takes repetitive work off people&apos;s desks.
         </p>
         <p className="mt-6 text-xs text-my-walnut dark:text-my-stone">
