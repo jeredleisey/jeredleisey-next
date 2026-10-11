@@ -93,7 +93,7 @@ No scan tool was installed. These were enough:
 
 ```sh
 # Who is there
-for i in $(seq 1 254); do (ping -c1 -t1 192.168.1.$i >/dev/null 2>&1 &); done; sleep 4; arp -an
+for i in $(seq 1 254); do (ping -c1 -t1 192.168.50.$i >/dev/null 2>&1 &); done; sleep 4; arp -an
 
 # Who made the network chip: the first three bytes against the IEEE list
 grep -i "^EC-B5-FA" oui.txt
@@ -251,7 +251,7 @@ The sandbox network has no path to my home network. A model on a PC in my home n
 The Hermes VM runs no agent code, so it is the one machine that gets an opening. The firewall on the host has a single rule for it:
 
 ```
-iifname "chaos" ip saddr 10.13.0.10 ip daddr 192.168.1.87 tcp dport 11434 accept
+iifname "chaos" ip saddr 10.20.0.10 ip daddr 192.168.50.40 tcp dport 11434 accept
 ```
 
 On that VM, nginx forwards the model calls and refuses the rest:
@@ -260,7 +260,7 @@ On that VM, nginx forwards the model calls and refuses the rest:
 server {
     listen 11434;
     location ~ ^/(v1/(chat/completions|completions|models|embeddings|messages|responses)|api/(chat|generate|tags|show|version|embed|ps))$ {
-        proxy_pass http://192.168.1.87:11434;
+        proxy_pass http://192.168.50.40:11434;
         proxy_http_version 1.1;
         proxy_buffering off;
         proxy_read_timeout 900s;
@@ -288,7 +288,7 @@ Each VM runs [Pi](https://pi.dev), a small coding agent with four tools and a sh
 {
   "providers": {
     "ollama": {
-      "baseUrl": "http://10.13.0.10:11434/v1",
+      "baseUrl": "http://10.20.0.10:11434/v1",
       "api": "openai-completions",
       "apiKey": "ollama",
       "models": [{ "id": "qwen3.5:9b", "contextWindow": 16384, "maxTokens": 4096 }]
@@ -368,7 +368,7 @@ Lachesis used exactly those names 23 seconds later. Nobody guessed a field.
 I did not take the verdict on trust. From the host:
 
 ```
-$ curl -s -i http://10.13.0.11:8000/api/thread
+$ curl -s -i http://10.20.0.11:8000/api/thread
 HTTP/1.0 200 OK
 Content-Type: application/json
 
