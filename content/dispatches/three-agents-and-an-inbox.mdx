@@ -1,0 +1,125 @@
+---
+title: "Three Agents and an Inbox"
+date: "2026-10-11"
+description: "I ran a small swarm of AI agents on my home network. Three agents, five direct messages, twelve minutes. The useful part was not the answer. It was the moment one agent told a second agent that it had made something up."
+draft: false
+series: "underworld"
+seriesPosition: 3
+topics: ["home lab", "ai agents", "agent swarm", "claude code"]
+---
+
+"Agent swarm" is the phrase of the month. A manager asked me about it at the end of last week, and I did not have a good answer. I had read about swarms. I had not run one.
+
+So I ran one, at the end of the same day that I rebuilt my home server. This Post is the record: what the job was, which models did what, how the agents talked to each other, and what I would change.
+
+## The job
+
+That morning, a sweep of my home network found ten devices that I could not name. They were addresses with no record. I wanted to know what each one was.
+
+It is a good job for a first swarm, for three reasons. It has a clear end. The facts are real and can be checked. And the work splits into parts that need different habits: one part gathers, one part decides, one part doubts.
+
+## Three roles
+
+My home lab uses names from Greek myth, and the three Fates were free. In Hesiod they are daughters of Nyx, which is the name of the server. One spins the thread, one measures it, one cuts it.
+
+| Agent | Role |
+| --- | --- |
+| Clotho | Gathers evidence. The only agent that touches the network |
+| Lachesis | Reads the evidence and decides what each device is |
+| Atropos | Checks each decision against the raw evidence, and cuts what does not hold |
+
+Each agent owned one file. Clotho wrote the evidence, Lachesis wrote the decisions, Atropos wrote the final list. No agent could edit the file of a different agent. If one of them disagreed with a file, it had to say so in a message.
+
+## What ran where
+
+This is the part people ask about first, so here it is in one table.
+
+| Part | Model | Where it ran |
+| --- | --- | --- |
+| The session that set up the run | Claude Opus 5.5 | Claude Code on my laptop |
+| Clotho | Claude Opus 5.5 | A subagent of that session, on my laptop |
+| Lachesis | Claude Opus 5.5 | A subagent of that session, on my laptop |
+| Atropos | Claude Opus 5.5 | A subagent of that session, on my laptop |
+| Local models | None | Not used in this run |
+
+All four are the same cloud model. That was a choice, and it has a cost.
+
+I have two GPUs at home, and the earlier Posts in this Series are about them. The old one holds a model of three billion parameters. The fast one holds one larger model at a time. Three agents on one card wait in a queue, and each of them reads thousands of tokens of evidence. For a first proof, I wanted to learn about the swarm, not about the queue. So the brains ran in the cloud, and my hardware was the subject of the work and not the engine.
+
+The plan also said that each agent gets its own sandbox machine on a network that cannot reach my home devices. That did not happen, for a reason that is a little funny. The job was to look at my home devices. The sandbox network blocks that on purpose, and it works. So the agents ran on my laptop for this run.
+
+## The inbox
+
+Here is what I learned about the word "inbox", because I had the wrong picture.
+
+I imagined a mailbox that each agent checks. That is not how it works in Claude Code. An agent sends a message to a second agent with one tool call. The message is delivered. If the second agent has stopped, the message wakes it, and it continues with all that it knew before. No agent checks anything, and no agent waits in a loop.
+
+That one fact shapes the design. Two of my three agents did nothing at the start. Each read the shared rules, said that it was ready, and stopped. They used no more tokens while they waited. The first message started the chain.
+
+The main session wrote one small file with the address of each agent. After that, it passed no messages. It watched.
+
+Five messages went between the agents.
+
+| Time | From | To | Message | What the receiver did |
+| --- | --- | --- | --- | --- |
+| 15:51:05 | Clotho | Lachesis | The evidence is ready | Read it and made draft decisions |
+| 15:51:38 | Lachesis | Clotho | I need the gateway's device list for five addresses | Made one more probe and added the facts |
+| 15:52:40 | Clotho | Lachesis | The facts are in the file | Changed two of its decisions |
+| 15:53:48 | Lachesis | Atropos | The list is ready for review | Checked ten rows and rejected three |
+| 15:54:48 | Atropos | Lachesis | Three rows are rejected, with reasons | Fixed all three |
+
+The second message is the first proof that this is more than a pipeline. Lachesis did not accept thin evidence. It asked for one specific fact, and it asked the agent that could get it.
+
+## The moment that mattered
+
+One device gave the network a name that starts with "Restore2". Lachesis wrote down that it was a Hatch Restore 2, a bedside sound machine, with medium confidence. It is a reasonable guess.
+
+Atropos rejected it. Here is the line from the log:
+
+```
+atropos -> lachesis | REJECT 3 rows: .220 medium rests on the gateway only,
+.218 maker Hatch has no fact, .91 'the model with Matter' names one model
+without a fact. Change or give a second fact
+```
+
+"Maker Hatch has no fact." No probe had returned the word Hatch. The name came from what the model already knew about the world, and it had gone into the table next to facts that were measured. Atropos did not say the answer was wrong. It said the answer had no evidence, which is a different and better complaint.
+
+Lachesis changed the row to what the evidence showed: a device with that name, and "Hatch Restore 2" marked as a guess.
+
+The second Post in this Series is about a voice assistant that told me a light had no color, when it could not see color at all. It is the same fault. A model fills a gap with something that sounds right. That time, I caught it, by reading logs. This time, a second agent caught it before I saw the result. That is the best argument for a swarm that I have seen with my own eyes.
+
+## The result
+
+Seven of ten devices were identified: a light bridge, a soundbar, a phone, a thermostat, a streaming box, a PC, and the device with the "Restore2" name. Three stayed unknown, and the final file says what a person must do to close each one.
+
+One of the seven was a small surprise. The thermostat is on my network and not in my home automation system. That explains why the voice assistant said that my kitchen has no climate device. It was right.
+
+The run took twelve minutes and about 245,000 tokens across the three agents.
+
+## What did not work well
+
+I want to be plain about this part, because most writing about swarms leaves it out.
+
+- **It was a pipeline with two loops.** The agents worked one after the other. Nothing ran in parallel. The two loops, the request for evidence and the rejection, are what made it more than a script. A job that lets agents work at the same time would show more.
+- **The log was written by hand.** I told each agent to add a line to a shared log file for each message. Each one did it a little differently. Some lines appear two times, and some name the wrong direction. A log that agents write about themselves is a log you cannot fully trust.
+- **A message has no proof of its sender.** A message said "From Lachesis" because Lachesis typed those words. For three agents on my laptop, that is fine. For anything larger, it is not.
+- **Agents had no names.** They had ids, and they found each other through a file. It worked, and it felt like a workaround.
+- **It was noisy for me.** Each time an agent stopped, the main session got a report. Nine reports came for one job.
+- **Waiting is not free at the start.** The two agents that waited used about 46,000 tokens each to read the rules and stop.
+
+## What I would build next
+
+The built-in messages are enough to prove the pattern. They are not enough to show it to a room.
+
+The next step is a small inbox service of my own, which I have named Hermes. The transport writes the log, not the agents. Each record gets an id, a time, a sender that the transport sets, a receiver, and the id of the message that it answers. "I acted on this message" becomes its own kind of record. A web page shows the messages as they happen.
+
+That page is the demo. A table of results is easy to ignore. Two agents that disagree in front of you are not.
+
+## What I would tell my manager
+
+- **A swarm is roles, files, and messages.** The model is the same in each seat. The difference is what each agent is told to care about and what it is permitted to touch.
+- **Give one agent the job of doubt.** The reviewer did not gather and did not decide. It only checked. It found the one invented fact.
+- **One owner for each file.** Disagreement then has to go through a message, and the message is the record.
+- **Set hard limits before the start.** My agents had a list of permitted probes, a rule of look and do not touch, and four messages each at most. They used two, three, and one.
+- **Start with a job that has checkable facts.** I could compare the result with my own home. A swarm that writes a strategy document gives you nothing to check.
+- **It costs more than one agent.** Three agents read the same rules and much of the same evidence. For a job this small, one agent could do it for less. The swarm earned its cost in one place: the review.
