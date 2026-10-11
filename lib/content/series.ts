@@ -60,6 +60,18 @@ export function getAllSeries(options: PostOptions = {}): Series[] {
     .filter((s): s is Series => s !== null);
 }
 
+// Where each visible Post that is in a Series sits in it, by the slug of the Post. A
+// list of Posts reads this one time, in place of getSeriesPart for each Post.
+export function getSeriesParts(options: PostOptions = {}): Map<string, Pick<SeriesPart, 'series' | 'part' | 'parts'>> {
+  const parts = new Map<string, Pick<SeriesPart, 'series' | 'part' | 'parts'>>();
+  for (const series of getAllSeries(options)) {
+    series.posts.forEach((post, index) => {
+      parts.set(post.slug, { series, part: index + 1, parts: series.posts.length });
+    });
+  }
+  return parts;
+}
+
 // Two Posts at one position make the reading order ambiguous. The Posts are in
 // order of position, so a repeat sits next to the Post it repeats.
 function checkPositions(slug: string, posts: Post[], contentDir: string) {

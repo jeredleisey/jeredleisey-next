@@ -126,7 +126,18 @@ export function getPosts({
     .map(readPost)
     .filter((p) => includeDrafts || !p.draft)
     .filter((p) => matchesFilters(p, filters))
-    .sort((a, b) => b.date.getTime() - a.date.getTime());
+    .sort(newestFirst);
+}
+
+// Newest first. A date has no time of day, so Posts of one day need a second rule:
+// the Posts of one Series stay together with the last part first, and all other
+// Posts go by slug. Without it, the order of the files on disk decides.
+function newestFirst(a: Post, b: Post): number {
+  const days = b.date.getTime() - a.date.getTime();
+  if (days !== 0) return days;
+  const group = (a.series ?? a.slug).localeCompare(b.series ?? b.slug);
+  if (group !== 0) return group;
+  return (b.seriesPosition ?? 0) - (a.seriesPosition ?? 0) || a.slug.localeCompare(b.slug);
 }
 
 export function getPost(
@@ -157,4 +168,50 @@ export function getFacets({ contentDir, includeDrafts }: PostOptions = {}): Face
     audiences: distinctSorted(posts.flatMap((p) => p.audience)),
     useCases: distinctSorted(posts.flatMap((p) => p.useCases)),
   };
+}
+
+// One facet value and the number of Posts that use it.
+export interface FacetCount {
+  value: string;
+  count: number;
+}
+
+export interface FacetCounts {
+  topics: FacetCount[];
+  audiences: FacetCount[];
+  useCases: FacetCount[];
+}
+
+// The most used value first, then by name.
+function counted(values: string[]): FacetCount[] {
+  const counts = new Map<string, number>();
+  for (const value of values) counts.set(value, (counts.get(value) ?? 0) + 1);
+  return [...counts]
+    .map(([value, count]) => ({ value, count }))
+    .sort((a, b) => b.count - a.count || a.value.localeCompare(b.value));
+}
+
+// A Post that names one value two times counts one time.
+export function getFacetCounts({ contentDir, includeDrafts }: PostOptions = {}): FacetCounts {
+  const posts = getPosts({ contentDir, includeDrafts });
+  return {
+    topics: counted(posts.flatMap((p) => [...new Set(p.topics)])),
+    audiences: counted(posts.flatMap((p) => [...new Set(p.audience)])),
+    useCases: counted(posts.flatMap((p) => [...new Set(p.useCases)])),
+  };
+}
+
+// The filter controls show a value only when this many Posts use it, and only this
+// many values. Most values are on one Post, and a control for each one is noise.
+const SHOWN_MIN_POSTS = 2;
+const SHOWN_MAX = 6;
+
+// Splits the values of one facet, most used first, into the values that the filter
+// controls show and the values that they keep back. The active value always shows.
+// When no value is on enough Posts, the most used values show.
+export function splitFacet(counts: FacetCount[], active?: string): { shown: FacetCount[]; more: FacetCount[] } {
+  const common = counts.filter((c) => c.count >= SHOWN_MIN_POSTS);
+  const top = new Set((common.length > 0 ? common : counts).slice(0, SHOWN_MAX).map((c) => c.value));
+  const isShown = (c: FacetCount) => top.has(c.value) || c.value === active;
+  return { shown: counts.filter(isShown), more: counts.filter((c) => !isShown(c)) };
 }
