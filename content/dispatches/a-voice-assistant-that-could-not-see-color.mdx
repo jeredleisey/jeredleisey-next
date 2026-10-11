@@ -1,0 +1,113 @@
+---
+title: "A Voice Assistant That Could Not See Color"
+date: "2026-10-11"
+description: "I built a voice assistant for my home that runs on my own hardware. A ten-year-old GPU failed at two of three jobs, a gaming PC saved the plan, and an audit of five sentences showed why the assistant lied about my lights."
+draft: true
+series: "underworld"
+seriesPosition: 2
+topics: ["home lab", "home assistant", "local models", "ai agents"]
+---
+
+By early afternoon I had a server with an old GPU and a small language model on it. I wanted a real job for them. I picked the one I have wanted for years: a voice assistant for my home that sends nothing to a cloud.
+
+It works now. I can say "turn on the office lights and make them green", and they go green about four seconds later. The path to that sentence was not straight, and the most useful part of the day was an audit of five sentences that went wrong.
+
+## Three parts
+
+A voice assistant in Home Assistant has three stages.
+
+1. **Speech to text.** Audio comes in, words come out.
+2. **A conversation agent.** It decides what the words mean and what to do.
+3. **Text to speech.** The reply is spoken.
+
+Each stage is a separate service, and you can put each one on different hardware. That turned out to matter a lot.
+
+## Where the old GPU said no
+
+The plan was to put all three on a GeForce GTX 980 from 2014 with 4 GB of memory.
+
+Text to speech was easy. It runs on the CPU and makes three seconds of audio in 0.2 seconds.
+
+Speech to text did not work on the GPU at all. The model loaded into the card's memory, and then each request failed. The library has no code for a card this old, and two different builds gave the same error. So it runs on the CPU. A command of three seconds comes back as text in about 2.6 seconds.
+
+The test for this needs no microphone. One service speaks a sentence, and the other writes down what it hears. I recommend that trick to anyone who builds a voice pipeline.
+
+At this point I could say "turn off the office lights" to my phone and the lights went off, with no cloud service in the path. That felt very good.
+
+## One sentence, one action
+
+Then I asked for two things in one sentence. "Turn on the office lights and make them green." It failed.
+
+The built-in conversation agent in Home Assistant does not understand language. It matches each sentence against fixed patterns, and one pattern gives one action. My sentence matched no pattern.
+
+A language model fixes that. Home Assistant gives the model the sentence, a list of my devices, and a set of tools such as "set a light". The model reads the intent and calls the tools. Simple sentences still go through the fast patterns first, so they do not wait for a model.
+
+## Fast or correct, not both
+
+I tried the old GPU first, as agreed with the agent: start small, and scale up only if needed.
+
+| Model | Where | Result | Time |
+| --- | --- | --- | --- |
+| 3 billion parameters | GTX 980, fits in memory | Wrong. It said it cannot set a color | 9 seconds |
+| 4 billion parameters | GTX 980, does not fit | Correct | 353 seconds |
+| 9 billion parameters | RTX 4080 in my gaming PC | Correct | 2 seconds |
+
+I was at my desk, waiting for the agent to finish its tests. Almost six minutes after the request, with no warning, my office went green.
+
+The first two rows are the limit of a 4 GB card for this job. The model that fits makes errors with tools. The model that is correct spills onto the CPU. The request is also larger than it looks, because Home Assistant sends the full device list with each sentence. That is two to three thousand tokens before the model starts.
+
+My gaming PC already ran a model server. The model on it was too large for its own card, so it was slow too. A smaller model that fits fully in the card's memory answers in one to three seconds. The lesson is the same on old and new hardware: a model that fits beats a larger model that does not.
+
+## The audit
+
+I tested by voice, and the results were mixed. So I asked the agent to read the logs. Home Assistant keeps a record of each run: what it heard, each tool call, and each answer.
+
+| What I said | What the assistant did | Verdict |
+| --- | --- | --- |
+| Something short that nobody remembers | Heard "Thank you. Bye. Bye. Bye." | Speech to text invented the words |
+| "Turn the office lights blue and set them to 30%." | One call: blue, 30% | Correct |
+| "Never mind, change it back." | One call: brightness 100% | Wrong |
+| "It doesn't look like you actually made any change though the light's still blue." | Read the light state, then the same call again | Wrong |
+| "Set the office light to a warm white at 100%." | One call: 3000 K, 100% | Correct |
+
+The third row is the interesting one. The assistant set only the brightness. Then it told me this:
+
+> The office lights have been reset to normal brightness (100%). The color has been removed, so they're back to their default white light.
+
+The lights were bright blue. When I said so, it made the same call again and suggested that I check my device settings.
+
+The logs showed three causes.
+
+- **The assistant cannot see color.** When it read the state of the light, Home Assistant gave it two facts: the light is on, and its brightness. No color. It could not see that the light was blue, even after I told it.
+- **"Change it back" had no target.** The assistant had no record of the state before its own change.
+- **It stated a result that it did not check.** It set the brightness and then said the color was gone. That part was invented.
+
+None of this was visible from the outside. From my chair, it looked like a model that was a little bit stupid. From the logs, it was a model that worked with half of the facts and filled in the rest.
+
+## The fix was a few sentences
+
+I did not change the model. I added rules to its instructions.
+
+- You cannot see the color of a light. Do not state one, unless your own call set it.
+- Brightness does not change color. To remove a color, set a color temperature.
+- The normal state of a light in this home is warm white, 2700 K, at 100%. "Change it back" means that state.
+- If the user says a change did not work, do not repeat the same call.
+- Say only what your tool calls did.
+
+Then I ran the same sentences again. Each one gave the correct result. In a new conversation I asked what color the lights were, and it said that it cannot see color, only on or off and brightness. That is the right answer.
+
+## What I take from this
+
+- **Split the pipeline across hardware.** Speech on the server that is always on, the language model on the fast card. No one machine had to do all of it.
+- **Test without a microphone.** Let one service speak to the other. It makes each test the same as the last one.
+- **Read the tool calls, not the answers.** The answer said the color was removed. The tool call said brightness only. The truth was in the call.
+- **Tell the model what it cannot see.** The worst behavior came from a gap in its input, not from the model. When the instructions named the gap, the invented answers stopped.
+- **Define normal.** A person knows what "change it back" means in their own home. A model needs it written down.
+
+## The limits that stay
+
+The language model needs my gaming PC to be on. Simple commands work at all times, because they never reach the model.
+
+"Change it back" means "go to normal", not the exact state from before.
+
+Speech to text is now the slow part and the weak part. It takes more than half of the four seconds, and one misheard word still gives a wrong action. The fast card could do that job too. That is a project for another day.
