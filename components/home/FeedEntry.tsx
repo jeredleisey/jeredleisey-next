@@ -8,6 +8,10 @@ export const KIND_LABEL: Record<FeedKind, string> = {
   update: 'Life',
 };
 
+// "Underworld · Part 2" for a Post in a Series.
+const seriesMark = (item: FeedItem) =>
+  item.seriesTitle ? ` · ${item.seriesTitle}${item.seriesPart ? ` · Part ${item.seriesPart}` : ''}` : '';
+
 const label = 'text-[11px] uppercase tracking-widest text-my-walnut dark:text-my-stone';
 
 // One of the newest items on the home page. Each kind has its own shape: a Project is
@@ -32,7 +36,7 @@ export function FeedEntry({ item }: { item: FeedItem }) {
       <Link href={item.href} className="group block">
         <span className={label}>
           {KIND_LABEL.post}
-          {item.seriesTitle && ` · ${item.seriesTitle}`}
+          {seriesMark(item)}
         </span>
         <span className="block mt-1 font-serif text-2xl leading-snug text-my-espresso dark:text-my-cream group-hover:underline underline-offset-4 decoration-1 decoration-my-stone">
           {item.title}
@@ -83,6 +87,7 @@ export function FeedRow({ item }: { item: FeedItem }) {
         )}
         <span className="ml-2 text-[11px] uppercase tracking-widest text-my-walnut/80 dark:text-my-stone/70">
           {KIND_LABEL[item.kind]}
+          {seriesMark(item)}
           {item.photo && ' · photo'}
         </span>
       </span>

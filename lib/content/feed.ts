@@ -1,6 +1,6 @@
 import { PROJECTS, type Project } from '@/lib/projects';
 import { getPosts, type PostOptions } from './posts';
-import { getAllSeries } from './series';
+import { getSeriesParts } from './series';
 import { getUpdates, type Photo } from './updates';
 
 export type FeedKind = 'project' | 'post' | 'update';
@@ -13,8 +13,10 @@ export interface FeedItem {
   title?: string;
   summary: string;
   date: Date;
-  // The title of a Post's Series. Other kinds have none.
+  // The title of a Post's Series, and the part number of the Post in it. Other kinds
+  // have none.
   seriesTitle?: string;
+  seriesPart?: number;
   // The first photo of an Update. Other kinds have none.
   photo?: Photo;
 }
@@ -48,7 +50,7 @@ export function getFeed({
   limit,
   projects = PROJECTS,
 }: FeedOptions = {}): FeedItem[] {
-  const seriesTitles = new Map(getAllSeries({ contentDir, includeDrafts }).map((s) => [s.slug, s.title]));
+  const seriesParts = getSeriesParts({ contentDir, includeDrafts });
   const items: FeedItem[] = [
     ...projects.map((p) => ({
       kind: 'project' as const,
@@ -58,15 +60,18 @@ export function getFeed({
       summary: p.description,
       date: new Date(`${p.date}T00:00:00Z`),
     })),
-    ...getPosts({ contentDir, includeDrafts }).map((p) => ({
-      kind: 'post' as const,
-      slug: p.slug,
-      href: `/dispatches/${p.slug}`,
-      title: p.title,
-      summary: p.description,
-      date: p.date,
-      ...(p.series && { seriesTitle: seriesTitles.get(p.series) }),
-    })),
+    ...getPosts({ contentDir, includeDrafts }).map((p) => {
+      const part = seriesParts.get(p.slug);
+      return {
+        kind: 'post' as const,
+        slug: p.slug,
+        href: `/dispatches/${p.slug}`,
+        title: p.title,
+        summary: p.description,
+        date: p.date,
+        ...(part && { seriesTitle: part.series.title, seriesPart: part.part }),
+      };
+    }),
     ...getUpdates({ contentDir, publicDir, includeDrafts }).map((u) => ({
       kind: 'update' as const,
       slug: u.slug,
