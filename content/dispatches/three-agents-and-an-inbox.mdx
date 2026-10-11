@@ -1,80 +1,128 @@
 ---
 title: "Three Agents and an Inbox"
 date: "2026-10-11"
-description: "I ran a small swarm of AI agents on my home network. Three agents, five direct messages, twelve minutes. The useful part was not the answer. It was the moment one agent told a second agent that it had made something up."
+description: "A three-agent swarm in Claude Code, with direct messages between subagents and no relay through the main session. The roles, the brief, the message mechanics, the token cost of each agent, the raw log, and the moment the reviewer rejected a fact that came from the model's memory."
 draft: false
 series: "underworld"
 seriesPosition: 3
 topics: ["home lab", "ai agents", "agent swarm", "claude code"]
 ---
 
-"Agent swarm" is the phrase of the month. I had read about swarms. I had not run one.
-
-So I ran one, at the end of the same day that I rebuilt my home server. This Post is the record: what the job was, which models did what, how the agents talked to each other, and what I would change.
+"Agent swarm" is the phrase of the month. I had read about swarms. I had not run one. This Post is the technical record of my first run: how the agents were started, how a message gets from one to the other, what each agent cost, and what the log looks like when agents write it by hand.
 
 ## The job
 
-That morning, a sweep of my home network found ten devices that I could not name. They were addresses with no record. I wanted to know what each one was.
+A sweep of my home network had found ten live addresses with no record. The job: say what each device is, with evidence.
 
-It is a good job for a first swarm, for three reasons. It has a clear end. The facts are real and can be checked. And the work splits into parts that need different habits: one part gathers, one part decides, one part doubts.
-
-## Three roles
-
-My home lab uses names from Greek myth, and the three Fates were free. In Hesiod they are daughters of Nyx, which is the name of the server. One spins the thread, one measures it, one cuts it.
-
-| Agent | Role |
-| --- | --- |
-| Clotho | Gathers evidence. The only agent that touches the network |
-| Lachesis | Reads the evidence and decides what each device is |
-| Atropos | Checks each decision against the raw evidence, and cuts what does not hold |
-
-Each agent owned one file. Clotho wrote the evidence, Lachesis wrote the decisions, Atropos wrote the final list. No agent could edit the file of a different agent. If one of them disagreed with a file, it had to say so in a message.
+It is a good first job for three reasons. It ends. Each claim can be checked against a real device. And it splits into parts that need different habits: gather, decide, doubt.
 
 ## What ran where
 
-This is the part people ask about first, so here it is in one table.
-
-| Part | Model | Where it ran |
+| Part | Model | Where |
 | --- | --- | --- |
-| The session that set up the run | Claude Opus 5.5 | Claude Code on my laptop |
-| Clotho | Claude Opus 5.5 | A subagent of that session, on my laptop |
-| Lachesis | Claude Opus 5.5 | A subagent of that session, on my laptop |
-| Atropos | Claude Opus 5.5 | A subagent of that session, on my laptop |
+| Main session | Claude Opus 5.5 | Claude Code on my laptop |
+| Clotho, gathers | Claude Opus 5.5 | Background subagent of that session |
+| Lachesis, decides | Claude Opus 5.5 | Background subagent of that session |
+| Atropos, reviews | Claude Opus 5.5 | Background subagent of that session |
 | Local models | None | Not used in this run |
 
-All four are the same cloud model. That was a choice, and it has a cost.
+I checked the model of each subagent in its transcript after the run. All three ran on the same model as the main session.
 
-I have two GPUs at home, and the earlier Posts in this Series are about them. The old one holds a model of three billion parameters. The fast one holds one larger model at a time. Three agents on one card wait in a queue, and each of them reads thousands of tokens of evidence. For a first proof, I wanted to learn about the swarm, not about the queue. So the brains ran in the cloud, and my hardware was the subject of the work and not the engine.
+The cloud was a choice. One 16 GB card serves one large model at a time, and each agent in this run read tens of thousands of tokens. For a first proof I wanted to learn about the swarm and not about a queue. The agents also ran on the laptop and not in sandbox VMs, because the job was to look at my home network and the sandbox blocks exactly that.
 
-The plan also said that each agent gets its own sandbox machine on a network that cannot reach my home devices. That did not happen, for a reason that is a little funny. The job was to look at my home devices. The sandbox network blocks that on purpose, and it works. So the agents ran on my laptop for this run.
+## How a message gets from one agent to the other
 
-## The inbox
+I had the wrong picture of an inbox. I expected a mailbox that each agent checks. Claude Code works in a different way, and the difference shapes the whole design.
 
-Here is what I learned about the word "inbox", because I had the wrong picture.
+- A subagent starts as a background task and gets an id.
+- An agent sends with one tool call: a receiver and a text.
+- If the receiver is in the middle of its work, the message arrives at its next tool call.
+- **If the receiver has stopped, the message starts it again, with its full earlier context.**
 
-I imagined a mailbox that each agent checks. That is not how it works in Claude Code. An agent sends a message to a second agent with one tool call. The message is delivered. If the second agent has stopped, the message wakes it, and it continues with all that it knew before. No agent checks anything, and no agent waits in a loop.
+So no agent polls, and no agent sleeps in a loop. An agent that has nothing to do ends its turn.
 
-That one fact shapes the design. Two of my three agents did nothing at the start. Each read the shared rules, said that it was ready, and stopped. They used no more tokens while they waited. The first message started the chain.
+A subagent has an id and no name, and the id exists only after the start. So the agents could not know each other's address from their prompt. The main session started all three, then wrote one file:
 
-The main session wrote one small file with the address of each agent. After that, it passed no messages. It watched.
+```json
+{
+  "clotho": "aef9…",
+  "lachesis": "a6c7…",
+  "atropos": "a33d…",
+  "main": "main"
+}
+```
 
-Five messages went between the agents.
+Each agent read that file at the moment it had to send. After it was written, the main session passed no message. It only received a report each time an agent stopped.
+
+Two of the three agents had nothing to do at the start. Their prompt said: read the shared brief, load the message tool, answer "ready", and stop. The first message from Clotho woke Lachesis. The first message from Lachesis woke Atropos.
+
+## The brief
+
+All three agents read one shared file before their own instructions. Three parts of it carried the design.
+
+**One owner for each file.** No shared writes.
+
+| File | Owner | Content |
+| --- | --- | --- |
+| `evidence.md` | Clotho | Raw facts for each address, each with the command that gave it |
+| `identities.md` | Lachesis | One row for each address: device, confidence, evidence used |
+| `final.md` | Atropos | The accepted list, the open list, and the reasons |
+| `messages.log` | All | One line for each message sent, received, or acted on |
+
+An agent that disagrees with a file cannot edit it. It must send a message, and the message is then the record.
+
+**Hard limits on messages.** At most four sent messages for each agent. No greetings, no thanks, no status reports. A message only when the receiver must do or change something.
+
+**Hard limits on the network.** Only Clotho may probe, and only like this:
+
+```
+- Look only. Do not log in to any device, do not guess passwords, do not change
+  any setting on any device, and do not send a command to a device.
+- Permitted probes: ping, the ARP table, mDNS and DNS-SD browse, reverse DNS, an
+  HTTP GET of a front page or a well-known description file, and a TCP connect
+  test on this port list only: 22, 53, 80, 443, 445, 548, 554, 631, 1400, 1883,
+  3689, 5000, 5353, 7000, 8008, 8009, 8080, 8443, 9100, 32400, 49152, 62078.
+- No nmap, no install of any tool, no scan of a different network.
+```
+
+A confidence rule for Lachesis did real work later: "high" needs two independent facts that agree, and one fact alone is "medium" at most.
+
+## How Clotho gathered evidence
+
+No scan tool was installed. These were enough:
+
+```sh
+# Who is there
+for i in $(seq 1 254); do (ping -c1 -t1 192.168.1.$i >/dev/null 2>&1 &); done; sleep 4; arp -an
+
+# Who made the network chip: the first three bytes against the IEEE list
+grep -i "^EC-B5-FA" oui.txt
+
+# What a device says about itself
+dns-sd -B _services._dns-sd._udp local.        # service types on mDNS
+curl -s http://<ip>:8008/setup/eureka_info      # Google cast devices
+curl -s http://<ip>/description.xml             # UPnP devices
+```
+
+The best single source was a page on the ISP gateway. Its device list answers a plain GET with no login, and gives a name, a hardware address, the link type, and the last activity for each client. For one device it also showed the DHCP client string, `dhcpcd-5.2.12:Linux-5.10.160:aarch64`, which says "embedded Linux on ARM" with no probe of the device at all.
+
+Clotho also wrote down a trap in that page. The gateway lists Wi-Fi clients of a second access point as wired, because that access point hangs on a wired port. A "wired" label there proves nothing.
+
+## The five messages
 
 | Time | From | To | Message | What the receiver did |
 | --- | --- | --- | --- | --- |
-| 15:51:05 | Clotho | Lachesis | The evidence is ready | Read it and made draft decisions |
-| 15:51:38 | Lachesis | Clotho | I need the gateway's device list for five addresses | Made one more probe and added the facts |
-| 15:52:40 | Clotho | Lachesis | The facts are in the file | Changed two of its decisions |
-| 15:53:48 | Lachesis | Atropos | The list is ready for review | Checked ten rows and rejected three |
-| 15:54:48 | Atropos | Lachesis | Three rows are rejected, with reasons | Fixed all three |
+| 15:51:05 | Clotho | Lachesis | The evidence is ready, and it is thin for five addresses | Made draft decisions |
+| 15:51:38 | Lachesis | Clotho | Send the gateway rows for those five | Made one GET of the gateway page |
+| 15:52:40 | Clotho | Lachesis | The facts are in the file | Moved one address from low to medium, one from medium to high |
+| 15:53:48 | Lachesis | Atropos | The list is ready: 6 high, 2 medium, 2 low | Checked ten rows, rejected three |
+| 15:54:48 | Atropos | Lachesis | Three rows are rejected, with reasons | Downgraded one, reworded two |
 
-The second message is the first proof that this is more than a pipeline. Lachesis did not accept thin evidence. It asked for one specific fact, and it asked the agent that could get it.
+The second message is where this stops being a pipeline. Lachesis did not accept thin evidence. It asked for one specific fact, from the one agent that was permitted to get it.
 
-## The moment that mattered
+## The rejection
 
-One device gave the network a name that starts with "Restore2". Lachesis wrote down that it was a Hatch Restore 2, a bedside sound machine, with medium confidence. It is a reasonable guess.
-
-Atropos rejected it. Here is the line from the log:
+One device gave the network a host name that starts with "Restore2". Lachesis wrote it down as a Hatch Restore 2, a bedside sound machine, with medium confidence. Atropos sent this:
 
 ```
 atropos -> lachesis | REJECT 3 rows: .220 medium rests on the gateway only,
@@ -82,44 +130,65 @@ atropos -> lachesis | REJECT 3 rows: .220 medium rests on the gateway only,
 without a fact. Change or give a second fact
 ```
 
-"Maker Hatch has no fact." No probe had returned the word Hatch. The name came from what the model already knew about the world, and it had gone into the table next to facts that were measured. Atropos did not say the answer was wrong. It said the answer had no evidence, which is a different and better complaint.
+"Maker Hatch has no fact." No probe had returned that word. It came from what the model knows about the world, and it sat in a table next to measured facts with the same weight. Atropos did not say that the guess was wrong. It said that it had no evidence, which is the better complaint.
 
-Lachesis changed the row to what the evidence showed: a device with that name, and "Hatch Restore 2" marked as a guess.
+Before it wrote that message, Atropos had also looked up each of the ten hardware address prefixes in the IEEE list by itself, and had not trusted the vendor column of the other agent.
 
-The second Post in this Series is about a voice assistant that told me a light had no color, when it could not see color at all. It is the same fault. A model fills a gap with something that sounds right. That time, I caught it, by reading logs. This time, a second agent caught it before I saw the result. That is the best argument for a swarm that I have seen with my own eyes.
+The second Post in this Series is about a voice assistant that said a light had lost its color, when it could not see color at all. It is the same fault: a gap filled with something that sounds right. There I found it in the logs, after the fact. Here a second agent found it before I saw the result.
 
-## The result
+## What it cost
 
-Seven of ten devices were identified: a light bridge, a soundbar, a phone, a thermostat, a streaming box, a PC, and the device with the "Restore2" name. Three stayed unknown, and the final file says what a person must do to close each one.
+| Agent | Tokens | Tool calls | Active time |
+| --- | --- | --- | --- |
+| Clotho | 100,752 | 21 | 463 s |
+| Lachesis | 70,212 | 16 | 252 s |
+| Atropos | 72,940 | 10 | 147 s |
+| Total | 243,904 | 47 | About 12 minutes of wall clock |
 
-One of the seven was a small surprise. The thermostat is on my network and not in my home automation system. That explains why the voice assistant said that my kitchen has no climate device. It was right.
+One number stands out. The two agents that only read the brief and stopped used about 46,000 tokens each for that first turn. An agent that waits is not free at the start. It pays for its own context once.
 
-The run took twelve minutes and about 245,000 tokens across the three agents.
+## The raw log, and why I do not trust it
+
+I told each agent to add a line to a shared log with a shell command, for each message sent, received, or acted on. Here is the start of that log, exactly as written:
+
+```
+15:51:05 | clotho -> lachesis | evidence.md is ready; thin evidence on .85 .193 .218 .220 .66; .220 is gone
+15:51:09 | clotho -> lachesis | RECEIVED evidence.md complete; strong on .83 .84 .88 .209 .91, thin on .85 .193 .218 .220 .66
+15:51:38 | lachesis -> clotho | REQUEST gateway device list rows (no login) for .220 .85 .193 .218 .66: hardware address, name, link type, last seen
+15:51:48 | lachesis -> clotho | asks for one GET of the gateway device list page, facts for .220 .85 .193 .218 .66
+15:52:40 | clotho -> clotho | ACTED on lachesis request: one GET of gateway devices.ha (no login asked); added section 'Added after request from lachesis' to evidence.md
+```
+
+Read the second line. Lachesis wrote it on receipt, and kept the direction of the sender. The fourth line is the same message as the third, logged a second time by the receiver. The fifth has the same agent as sender and receiver. Each agent followed the format, and each one read it a little differently.
+
+A log that agents write about themselves is a log you cannot fully trust.
 
 ## What did not work well
 
-I want to be plain about this part, because most writing about swarms leaves it out.
+- **It was a pipeline with two loops.** Nothing ran in parallel. The request for evidence and the rejection are what made it more than a script.
+- **A message has no proof of its sender.** It says "From lachesis" because the agent typed it.
+- **Ids, not names.** The roster file worked, and it is a workaround.
+- **Nine reports for one job.** Each stop of an agent sends a report to the main session.
+- **One model in each seat.** Three agents with the same model share the same blind spots. The reviewer worked because of its instructions, not because it was a different mind.
 
-- **It was a pipeline with two loops.** The agents worked one after the other. Nothing ran in parallel. The two loops, the request for evidence and the rejection, are what made it more than a script. A job that lets agents work at the same time would show more.
-- **The log was written by hand.** I told each agent to add a line to a shared log file for each message. Each one did it a little differently. Some lines appear two times, and some name the wrong direction. A log that agents write about themselves is a log you cannot fully trust.
-- **A message has no proof of its sender.** A message said "From Lachesis" because Lachesis typed those words. For three agents on my laptop, that is fine. For anything larger, it is not.
-- **Agents had no names.** They had ids, and they found each other through a file. It worked, and it felt like a workaround.
-- **It was noisy for me.** Each time an agent stopped, the main session got a report. Nine reports came for one job.
-- **Waiting is not free at the start.** The two agents that waited used about 46,000 tokens each to read the rules and stop.
+## What I built next
 
-## What I would build next
+Each fault above became a requirement for a small inbox service of my own, named Hermes:
 
-The built-in messages are enough to prove the pattern. They are not enough to show it to a room.
+- The transport writes the log, not the agents.
+- Each agent has a token, and the service sets the sender from it.
+- Each record has an id, a time, a sender, a receiver, and the id of the message it answers.
+- "I acted on this message" is its own record type that must point at a message sent to the caller.
+- Names exist before the start.
+- A web page shows the records as they arrive.
 
-The next step is a small inbox service of my own, which I have named Hermes. The transport writes the log, not the agents. Each record gets an id, a time, a sender that the transport sets, a receiver, and the id of the message that it answers. "I acted on this message" becomes its own kind of record. A web page shows the messages as they happen.
-
-That page is the demo. A table of results is easy to ignore. Two agents that disagree in front of you are not.
+I built it the same evening and ran three local agents through it, with no cloud model. That is the next Post.
 
 ## What I take from this
 
-- **A swarm is roles, files, and messages.** The model is the same in each seat. The difference is what each agent is told to care about and what it is permitted to touch.
-- **Give one agent the job of doubt.** The reviewer did not gather and did not decide. It only checked. It found the one invented fact.
-- **One owner for each file.** Disagreement then has to go through a message, and the message is the record.
-- **Set hard limits before the start.** My agents had a list of permitted probes, a rule of look and do not touch, and four messages each at most. They used two, three, and one.
-- **Start with a job that has checkable facts.** I could compare the result with my own home. A swarm that writes a strategy document gives you nothing to check.
-- **It costs more than one agent.** Three agents read the same rules and much of the same evidence. For a job this small, one agent could do it for less. The swarm earned its cost in one place: the review.
+- **A swarm is roles, files, and messages.** The model was the same in each seat. The difference was what each agent was told to care about and what it was permitted to touch.
+- **Give one agent the job of doubt.** The reviewer did not gather and did not decide. It found the one invented fact.
+- **One owner for each file.** A disagreement then has to become a message.
+- **Set hard limits before the start.** A probe list, look and do not touch, four messages each. The agents used two, three, and one.
+- **Start with checkable facts.** I could compare the result with my own home.
+- **It costs more than one agent.** For a job this small, one agent can do it for less. The swarm earned its cost in one place: the review.
