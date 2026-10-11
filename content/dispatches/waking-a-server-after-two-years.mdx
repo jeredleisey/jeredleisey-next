@@ -12,6 +12,8 @@ I built a small Proxmox server in 2024, installed it two times, and then left it
 
 I did the work with an AI agent that had SSH access to the host. I name its errors too, because they are part of the record.
 
+The network addresses in this Series are examples. The structure is real, and the numbers are not mine.
+
 ## The hardware
 
 | Part | Detail |
@@ -32,15 +34,15 @@ The host ran Proxmox VE 8.2.2 on Debian 12, kernel 6.8.4, with the enterprise pa
 
 ```
 $ ping -c2 1.1.1.1
-From 192.168.1.1 icmp_seq=1 Destination Net Unreachable
-From 192.168.1.1 icmp_seq=2 Destination Net Unreachable
+From 192.168.50.1 icmp_seq=1 Destination Net Unreachable
+From 192.168.50.1 icmp_seq=2 Destination Net Unreachable
 ```
 
 A router that says "net unreachable" has no route out. The laptop on the same subnet told the rest of the story:
 
 ```
 $ route -n get default | grep gateway
-    gateway: 192.168.1.254
+    gateway: 192.168.50.254
 ```
 
 In 2024 the router held `.1`. Today a Wi-Fi access point with OpenWRT holds `.1`, with its WAN port not connected and its DHCP server still on. The hardware address in the ARP table matched my own inventory note for that access point.
@@ -48,9 +50,9 @@ In 2024 the router held `.1`. Today a Wi-Fi access point with OpenWRT holds `.1`
 The agent tested the fix on the running system first, then saved it:
 
 ```sh
-ip route replace default via 192.168.1.254 dev vmbr0
+ip route replace default via 192.168.50.254 dev vmbr0
 ping -c2 1.1.1.1                      # 0% packet loss
-sed -i 's|gateway 192.168.1.1$|gateway 192.168.1.254|' /etc/network/interfaces
+sed -i 's|gateway 192.168.50.1$|gateway 192.168.50.254|' /etc/network/interfaces
 ```
 
 ## The upgrade, 8.2 to 9.2
@@ -197,14 +199,14 @@ There was no `/dev/kvm`. The old VM definitions had `kvm: 0`, so they ran in ful
 
 Code that agents write must not reach my lights or my laptop. The switch has no VLAN support, so the separation lives on the host.
 
-Proxmox SDN gives a bridge with DHCP and source NAT: a simple zone, one VNet named `chaos`, and the subnet `10.13.0.0/24`. SDN does the routing out. It does not block the path to the home LAN. A small nftables table does that:
+Proxmox SDN gives a bridge with DHCP and source NAT: a simple zone, one VNet named `chaos`, and the subnet `10.20.0.0/24`. SDN does the routing out. It does not block the path to the home LAN. A small nftables table does that:
 
 ```
 table inet chaos_guard {
   chain forward {
     type filter hook forward priority -10; policy accept;
     iifname "chaos" ct state established,related accept
-    iifname "chaos" ip daddr 10.13.0.0/24 accept
+    iifname "chaos" ip daddr 10.20.0.0/24 accept
     iifname "chaos" ip daddr { 10.0.0.0/8, 172.16.0.0/12, 192.168.0.0/16,
                                100.64.0.0/10, 169.254.0.0/16 } drop
     iifname "chaos" meta nfproto ipv6 drop
@@ -227,9 +229,9 @@ The test needs no VM. A network namespace with one end of a veth pair on the bri
 ip netns add t
 ip link add vt0 type veth peer name vt1
 ip link set vt0 master chaos up && ip link set vt1 netns t
-ip netns exec t sh -c 'ip addr add 10.13.0.9/24 dev vt1; ip link set vt1 up; ip route add default via 10.13.0.1'
+ip netns exec t sh -c 'ip addr add 10.20.0.9/24 dev vt1; ip link set vt1 up; ip route add default via 10.20.0.1'
 ip netns exec t ping -c1 1.1.1.1                       # works
-ip netns exec t nc -z -w2 192.168.1.100 8123           # blocked
+ip netns exec t nc -z -w2 192.168.50.20 8123           # blocked
 ```
 
 ## A console for a host with one GPU
@@ -286,7 +288,7 @@ The second sentence is wrong two times. Gaia is the mother of the Titans, and th
 | --- | --- |
 | Host | Proxmox VE 9.2.21, kernel 7.0.14, ZFS 2.4.4 |
 | Storage | `rpool` on SATA for the system and backups, `erebus` on NVMe for guests |
-| Sandbox | SDN VNet `chaos`, `10.13.0.0/24`, DHCP, source NAT, nftables guard |
+| Sandbox | SDN VNet `chaos`, `10.20.0.0/24`, DHCP, source NAT, nftables guard |
 | Template | Debian 13 cloud image with cloud-init. A clone answers its guest agent in about 35 seconds |
 | Backups | `vzdump`, 02:30 each night, zstd, 7 daily and 4 weekly. A restore was tested |
 | GPU VM | Ubuntu 24.04, GTX 980 by passthrough, NVIDIA 580, Ollama |

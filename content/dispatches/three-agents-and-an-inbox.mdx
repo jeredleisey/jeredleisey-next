@@ -1,22 +1,22 @@
 ---
 title: "Three Agents and an Inbox"
 date: "2026-10-11"
-description: "A three-agent swarm in Claude Code, with direct messages between subagents and no relay through the main session. The roles, the brief, the message mechanics, the token cost of each agent, the raw log, and the moment the reviewer rejected a fact that came from the model's memory."
+description: "Two runs of a three-agent swarm in one day. First in Claude Code on a cloud model, with direct messages between subagents. Then fully local: three sandbox VMs, a 9B model on my own GPU, and an inbox service that sets the sender, writes the log, and owns the files."
 draft: false
 series: "underworld"
 seriesPosition: 3
-topics: ["home lab", "ai agents", "agent swarm", "claude code"]
+topics: ["home lab", "ai agents", "agent swarm", "claude code", "local models", "ollama"]
 ---
 
-"Agent swarm" is the phrase of the month. I had read about swarms. I had not run one. This Post is the technical record of my first run: how the agents were started, how a message gets from one to the other, what each agent cost, and what the log looks like when agents write it by hand.
+"Agent swarm" is the phrase of the month. I had read about swarms. I had not run one. This Post is the technical record of my first two runs, on one day. Run one used a cloud model and the messages that Claude Code has built in. Run two used a model on my own GPU, three sandbox VMs, and an inbox service that I wrote between the runs to fix what the first one showed.
 
-## The job
+## Run one: the job
 
 A sweep of my home network had found ten live addresses with no record. The job: say what each device is, with evidence.
 
 It is a good first job for three reasons. It ends. Each claim can be checked against a real device. And it splits into parts that need different habits: gather, decide, doubt.
 
-## What ran where
+## Run one: what ran where
 
 | Part | Model | Where |
 | --- | --- | --- |
@@ -93,7 +93,7 @@ No scan tool was installed. These were enough:
 
 ```sh
 # Who is there
-for i in $(seq 1 254); do (ping -c1 -t1 192.168.1.$i >/dev/null 2>&1 &); done; sleep 4; arp -an
+for i in $(seq 1 254); do (ping -c1 -t1 192.168.50.$i >/dev/null 2>&1 &); done; sleep 4; arp -an
 
 # Who made the network chip: the first three bytes against the IEEE list
 grep -i "^EC-B5-FA" oui.txt
@@ -163,32 +163,254 @@ Read the second line. Lachesis wrote it on receipt, and kept the direction of th
 
 A log that agents write about themselves is a log you cannot fully trust.
 
-## What did not work well
+## What did not work well in run one
 
 - **It was a pipeline with two loops.** Nothing ran in parallel. The request for evidence and the rejection are what made it more than a script.
 - **A message has no proof of its sender.** It says "From lachesis" because the agent typed it.
 - **Ids, not names.** The roster file worked, and it is a workaround.
 - **Nine reports for one job.** Each stop of an agent sends a report to the main session.
 - **One model in each seat.** Three agents with the same model share the same blind spots. The reviewer worked because of its instructions, not because it was a different mind.
+- **Nothing was local.** The agents ran on my laptop, on a cloud model.
 
-## What I built next
+## Run two: the same three seats, all local
 
-Each fault above became a requirement for a small inbox service of my own, named Hermes:
+The second run, the same evening, changed each of those points that I could change in a few hours. Three agents, each in its own sandbox VM, each on a model that runs on my own GPU, with an inbox that I wrote.
 
-- The transport writes the log, not the agents.
-- Each agent has a token, and the service sets the sender from it.
-- Each record has an id, a time, a sender, a receiver, and the id of the message it answers.
-- "I acted on this message" is its own record type that must point at a message sent to the caller.
-- Names exist before the start.
-- A web page shows the records as they arrive.
+| Part | Program | Model | Where |
+| --- | --- | --- | --- |
+| Clotho, the server | Pi 1.1.0 | `qwen3.5:9b` | Its own VM on the sandbox network |
+| Lachesis, the page | Pi 1.1.0 | `qwen3.5:9b` | Its own VM on the sandbox network |
+| Atropos, the test | Pi 1.1.0 | `qwen3.5:9b` | Its own VM on the sandbox network |
+| Model server | Ollama 0.40.3 | | A gaming PC with an RTX 4080 |
+| Inbox | Hermes | | Its own VM on the sandbox network |
+| Cloud models | None | | |
 
-I built it the same evening and ran three local agents through it, with no cloud model. That is the next Post.
+The model has 9 billion parameters at 4-bit quantization. With a context of 16,384 tokens it takes 6.1 GB, all of it in video memory, and it writes about 95 tokens each second.
+
+## Hermes: the inbox as a service
+
+Each fault of the hand-written log became a rule in a small service. It is about 250 lines of Python with only the standard library and SQLite.
+
+| Fault in run one | Rule in Hermes |
+| --- | --- |
+| The agents wrote the log, each a little differently | The service writes each record |
+| No proof of the sender | Each agent has a token, and the service sets the sender from it |
+| "Acted on" was free text | `acted` is its own record type, and it must point at a message that was sent to the caller |
+| Ids, not names | Names exist before the start, in the config of the service |
+| Hard to show | A web page streams each record as it arrives |
+
+One table holds the log:
+
+```sql
+CREATE TABLE records (
+  id        INTEGER PRIMARY KEY AUTOINCREMENT,
+  ts        REAL NOT NULL,
+  kind      TEXT NOT NULL,     -- message | acted | file
+  sender    TEXT NOT NULL,     -- set by the service from the token
+  recipient TEXT,
+  reply_to  INTEGER,           -- the message this record answers or acts on
+  body      TEXT NOT NULL,
+  read_at   REAL               -- when the recipient fetched it
+);
+```
+
+The API is small. A write needs a bearer token, and the token is the identity:
+
+| Call | Use |
+| --- | --- |
+| `POST /api/send` | Send a message. A message to yourself is refused |
+| `GET /api/inbox?wait=50` | New messages for the caller, each one time. The call waits for the first one |
+| `POST /api/acted` | Record what the caller changed because of a message |
+| `PUT /api/files/NAME` | Publish a shared file. The first agent that publishes a name owns it |
+| `GET /api/log`, `GET /events` | The full log, and the same as a live stream for the web page |
+
+The file rule is "one owner for each file" from run one, now enforced by the transport. A second agent that publishes the same name gets this:
+
+```
+hermes: 'test.py' belongs to clotho. Send clotho a message if it must change.
+```
+
+### A command, not an MCP server
+
+The agents reach Hermes through a command in their shell, not through an MCP server:
+
+```sh
+hermes inbox --wait 30
+hermes send lachesis "The API is at /api/thread." --reply-to 3
+hermes acted 3 "Changed the fetch call to the new path."
+hermes put index.html
+hermes get index.html static/index.html
+```
+
+That was a choice for a small model. Each MCP tool adds a schema to the prompt of each request. A model of this size already knows how to run a shell command, and one line of help costs less context than four tool schemas. It also works with any agent program.
+
+## A sandbox that can reach a model and nothing else
+
+The sandbox network has no path to my home network. A model on a PC in my home network is exactly such a path. The answer is one narrow gate.
+
+The Hermes VM runs no agent code, so it is the one machine that gets an opening. The firewall on the host has a single rule for it:
+
+```
+iifname "chaos" ip saddr 10.20.0.10 ip daddr 192.168.50.40 tcp dport 11434 accept
+```
+
+On that VM, nginx forwards the model calls and refuses the rest:
+
+```nginx
+server {
+    listen 11434;
+    location ~ ^/(v1/(chat/completions|completions|models|embeddings|messages|responses)|api/(chat|generate|tags|show|version|embed|ps))$ {
+        proxy_pass http://192.168.50.40:11434;
+        proxy_http_version 1.1;
+        proxy_buffering off;
+        proxy_read_timeout 900s;
+    }
+    location / {
+        return 403 "hermes: this model call is not permitted\n";
+    }
+}
+```
+
+The allow list matters because the Ollama API has no login. Without it, code in a sandbox could delete a model from the PC or fill its disk with new ones. The test from an agent VM:
+
+```
+through hermes:      ['qwen3.5:9b', ...]
+direct to the PC:    blocked
+POST /api/pull:      HTTP 403
+DELETE /api/delete:  HTTP 403
+```
+
+## The agent program and its runner
+
+Each VM runs [Pi](https://pi.dev), a small coding agent with four tools and a short system prompt. A short prompt is the reason I chose it for a 9B model. One file points it at the gate:
+
+```json
+{
+  "providers": {
+    "ollama": {
+      "baseUrl": "http://10.20.0.10:11434/v1",
+      "api": "openai-completions",
+      "apiKey": "ollama",
+      "models": [{ "id": "qwen3.5:9b", "contextWindow": 16384, "maxTokens": 4096 }]
+    }
+  }
+}
+```
+
+A subagent in Claude Code wakes when a message arrives. An agent in a VM has no such thing, so a small runner does it. It asks Hermes for messages with a long poll, and starts the agent one time for each batch:
+
+```sh
+while [ "$wakes" -lt "$MAX_WAKES" ]; do
+  msgs="$(hermes inbox --wait 50)"
+  [ "$msgs" = "No new messages." ] && continue
+  wakes=$((wakes + 1))
+  timeout 1200 pi -p --offline --model "ollama/qwen3.5:9b" --session-id "$SESSION" \
+    --append-system-prompt COMMON.md --append-system-prompt ROLE.md \
+    "New messages for you, $NAME: $msgs ..." < /dev/null >> pi.log 2>&1
+done
+```
+
+Three details in it are worth the space:
+
+- **`--session-id` with a fixed id** gives the agent its memory across starts. Each start is a new process, and the session file is the context.
+- **`< /dev/null`** is not decoration. With an open stdin and no terminal, `pi -p` waits for input and never starts. I found that in a plumbing test against a smaller model, before the real run. Without the test, the first run would have hung with no error.
+- **`MAX_WAKES` and `timeout`** are the hard limits: ten starts for each agent, and twenty minutes for one start. Two agents that answer each other forever is the failure I wanted to make impossible.
+
+That plumbing test also gave one result about models. `llama3.2:3b` on my old GTX 980 did not call the shell tool. It wrote the tool call as text in its answer. A model that cannot call a tool cannot be an agent, at any speed.
+
+## The job and the briefs
+
+A small web app, "The Thread": one page with one button, and a server with one JSON endpoint that returns a random mortal, the length of the thread, and a fate.
+
+Clotho owns `server.py`. Lachesis owns `index.html`. Atropos writes no app code and owns `verdict.md`. The two builders start at the same time, and the brief of Clotho makes them negotiate:
+
+```
+1. Decide the JSON that GET /api/thread returns. [...] You choose the exact field names.
+2. FIRST, before you write code, send lachesis the exact contract in one message: the
+   path, each field name, its type, and one example response. lachesis builds the page
+   at the same time and must not guess.
+```
+
+The brief of Atropos ends with the sentence that the first run taught me: "Trust only what you measured yourself. A message that says 'it works' is not evidence."
+
+## The run
+
+I sent the job to Clotho and Lachesis as the owner, through the same API. This is the full log of the service, eight records:
+
+| Id | Time | Record |
+| --- | --- | --- |
+| 1, 2 | 18:00:51 | The owner sends the job to Clotho and to Lachesis |
+| 3 | 18:01:10 | Clotho sends Lachesis the contract |
+| 4 | 18:01:33 | Lachesis publishes `index.html`, version 1 |
+| 5 | 18:01:35 | Lachesis tells Clotho: published, with the field names it used |
+| 6 | 18:02:13 | Clotho publishes `server.py`, version 1 |
+| 7 | 18:02:23 | Clotho tells Atropos: ready for test |
+| 8 | 18:02:47 | Atropos publishes `verdict.md`: all checks pass |
+
+From the first start of an agent to the verdict: 1 minute and 49 seconds.
+
+Record 3, with its line breaks restored:
+
+```
+Server contract for GET /api/thread:
+
+Path: GET /api/thread
+Returns JSON with 3 fields:
+  - mortal_name: string (person name, e.g., "Socrates")
+  - thread_length_years: integer (years of story, e.g., 70)
+  - fate: string (short fate description, e.g., "wrote philosophical dialogues")
+Example response:
+{"mortal_name": "Marcus", "thread_length_years": 150, "fate": "became a philosopher"}
+```
+
+Lachesis used exactly those names 23 seconds later. Nobody guessed a field.
+
+I did not take the verdict on trust. From the host:
+
+```
+$ curl -s -i http://10.20.0.11:8000/api/thread
+HTTP/1.0 200 OK
+Content-Type: application/json
+
+{"mortal_name": "Laozi", "thread_length_years": 160, "fate": "wrote Tao Te Ching"}
+```
+
+The page calls `fetch('/api/thread')` and reads `data.mortal_name`, `data.thread_length_years`, and `data.fate`. The app works, and the verdict of Atropos is correct.
+
+## The two runs side by side
+
+| | Run one | Run two |
+| --- | --- | --- |
+| Job | Identify ten network devices | Build a small web app |
+| Model | Claude Opus 5.5, cloud | `qwen3.5:9b`, on my own GPU |
+| Agent program | Claude Code subagents | Pi 1.1.0 |
+| Where the agents ran | My laptop | One sandbox VM each |
+| Messages | Built-in, agent to agent | Hermes |
+| Who wrote the log | The agents | The service |
+| Wall clock | About 12 minutes | 1 minute 49 seconds |
+| Cloud tokens | 243,904 | 0 |
+| A message that changed the receiver | Two: a request for evidence and a rejection | One: the contract |
+| A disagreement | Yes, three rows rejected | No |
+
+The jobs are different, so the two times do not compare. What compares is the last two rows.
+
+## What did not work in run two
+
+- **No agent wrote an `acted` record.** Each brief asks for it after a change that a message caused. All three skipped it. A rule in a brief is a request. The log of the service shows the gap at once, which the hand-written log of run one could not.
+- **Atropos skipped its last step.** It published the verdict and stopped, and did not send the final message to the owner.
+- **The work was not parallel.** Clotho sent the contract in its first start and stopped after 9 seconds. It wrote the server only in its second start, after the page was published. The order was contract, page, server, test.
+- **Nobody disagreed.** The job was small and the contract was clear, so the reviewer had nothing to cut. Run two proves the transport with local models. It does not prove the review loop with them.
+- **One request at a time.** The model server took the three agents in turn. At 95 tokens each second, short turns hide that. A larger job will not.
+
+The next version moves two of these from the brief into the transport. The runner can refuse to end a start that changed files with no `acted` record. And it can send the final report itself if the agent does not.
 
 ## What I take from this
 
-- **A swarm is roles, files, and messages.** The model was the same in each seat. The difference was what each agent was told to care about and what it was permitted to touch.
-- **Give one agent the job of doubt.** The reviewer did not gather and did not decide. It found the one invented fact.
-- **One owner for each file.** A disagreement then has to become a message.
-- **Set hard limits before the start.** A probe list, look and do not touch, four messages each. The agents used two, three, and one.
-- **Start with checkable facts.** I could compare the result with my own home.
-- **It costs more than one agent.** For a job this small, one agent can do it for less. The swarm earned its cost in one place: the review.
+- **A swarm is roles, files, and messages.** In each run the model was the same in every seat. The difference was what each agent was told to care about and what it was permitted to touch.
+- **Give one agent the job of doubt.** In run one the reviewer found the one invented fact.
+- **One owner for each file.** First as a rule in a brief, then as a 403 from the transport. The second form is the one that holds.
+- **Put rules in the transport, not in the prompt.** The cloud model followed the brief closely. The local model skipped two steps of it. What the service enforces, no model can skip.
+- **Do not let agents write their own log.**
+- **A small local model can do a small agent job.** Nine billion parameters, a short system prompt, a shell command for messages, and a clear contract were enough for a working app in under two minutes, for no cloud cost.
+- **Test the plumbing with the worst model you have.** It found the stdin fault before the real run.
+- **The review is where a swarm earns its cost.** That is proven with the cloud model. With the local model, it is the next thing to test.
