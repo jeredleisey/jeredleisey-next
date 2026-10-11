@@ -3,6 +3,7 @@ import { ReadingTransition } from '@/components/PageTransitions';
 import { MDXRemote } from 'next-mdx-remote-client/rsc';
 import { ReadingLayout } from '@/components/reading/ReadingLayout';
 import { getPost, getPosts, getSeries, getSeriesPart, readingMinutes } from '@/lib/content';
+import { mdxOptions } from '@/lib/mdxOptions';
 import { proseClasses } from '@/lib/proseClasses';
 
 // Drafts show only while Jered runs the site in development. The build lists only
@@ -62,7 +63,7 @@ export default async function PostPage({ params }: Props) {
         ]}
       >
         <div className={proseClasses}>
-          <MDXRemote source={post.content} />
+          <MDXRemote source={post.content} options={mdxOptions} />
         </div>
       </ReadingLayout>
     </ReadingTransition>

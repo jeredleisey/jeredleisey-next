@@ -1,6 +1,7 @@
 import Image from 'next/image';
 import { MDXRemote } from 'next-mdx-remote-client/rsc';
 import type { Update } from '@/lib/content';
+import { mdxOptions } from '@/lib/mdxOptions';
 import { proseClasses } from '@/lib/proseClasses';
 
 // The text, photos, and link of one Update. The Life list and the Update page both use it.
@@ -13,7 +14,7 @@ export function UpdateBody({ update }: { update: Update }) {
   return (
     <div className="flex flex-col gap-4">
       <div className={proseClasses}>
-        <MDXRemote source={update.content} />
+        <MDXRemote source={update.content} options={mdxOptions} />
       </div>
 
       {update.photos.length > 0 && (
