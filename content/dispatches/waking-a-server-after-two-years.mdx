@@ -1,0 +1,107 @@
+---
+title: "Waking a Server After Two Years"
+date: "2026-10-11"
+description: "I started an old Proxmox server that I had not touched since 2024, gave an AI agent SSH access, and had a working home lab with a local model on a ten-year-old GPU by mid-afternoon. Three faults came first."
+draft: true
+series: "underworld"
+seriesPosition: 1
+topics: ["home lab", "proxmox", "ai agents", "local models"]
+---
+
+I built a small server in 2024 to learn Proxmox. I installed it two times, made two virtual machines, and then left it off for two years. This morning I started it again, and I could not remember the login.
+
+The reason I came back to it is simple. I now have agents that can do the slow parts of a setup with me. So I gave one SSH access and we worked through it together. This Post is the record of that day: what broke, what we decided, and what runs now.
+
+## The login was the easy part
+
+I asked if I was locked out. The agent explained how to reset the root password from the boot menu. I did not need it. I knew the password. I had forgotten that the user name was `root`.
+
+That set the tone for the day. Most problems were smaller than they looked, and three were larger.
+
+## Fault one: a gateway that was not a gateway
+
+The server could not reach the internet. Its network config pointed at the address my router had in 2024. Today that address belongs to a Wi-Fi access point that I flashed with OpenWRT and never finished. The access point answered each packet with "Destination Net Unreachable".
+
+The agent found it by comparison. My laptop used a different gateway on the same network. One line in the network config fixed it.
+
+The lesson is about old notes, not about networks. I had an open item in my own home inventory that said the access point still had its default address. I wrote that in May and forgot it.
+
+## Fault two: two pools with one name
+
+The upgrade from Proxmox VE 8.2 to 9.2 went through with no package errors. Then the server did not come back.
+
+The screen showed a recovery prompt and this message:
+
+```
+cannot import 'rpool': more than one matching pool
+```
+
+My first install in 2024 was on the large NVMe drive. My second install was on a small SATA drive, and I wiped the partition table of the NVMe drive and thought that was the end of it. It was not. The old ZFS pool was still there, complete, with both of my old virtual machines. The two pools had the same name. The old version of ZFS ignored the stale one at boot. The new version refused to guess.
+
+One command at the recovery prompt got the server up. The permanent fix was to erase the NVMe drive, which I wanted to do in any case.
+
+There is a second lesson here, and it is about the agent. Before the upgrade, it saw a failed service that pointed at this exact problem. It told me the failure was harmless. It was wrong, and it said so plainly when the boot failed. I prefer that to an agent that explains why it was right all along.
+
+## Fault three: virtualization was off
+
+The kernel log had one quiet line: `SVM disabled (by BIOS)`. My virtual machines in 2024 ran with no hardware virtualization at all. That explains why I thought the server was slow, and it is part of why I lost interest.
+
+Two settings in the BIOS fixed it.
+
+## Twenty-five questions before any build
+
+With the server healthy, I asked the agent to question me about what the machine is for. It asked 25 questions in four rounds, each with a recommended answer. I disagreed with some of them, and the design changed.
+
+The decisions that matter:
+
+- **The system and the guests live on different disks.** The small SATA drive holds Proxmox and the backups. The NVMe drive holds the virtual machines. A problem with one does not stop the other.
+- **Code that agents write runs on a separate network.** Sandbox machines reach the internet and each other. They cannot reach my lights, my laptop, or the server itself. We tested that from inside a real guest.
+- **The old GPU goes to one virtual machine.** A GeForce GTX 980 from 2014 has 4 GB of memory. That is too small for a serious model and large enough for embeddings, speech, and small jobs.
+- **Outside access is Tailscale only.** No open ports on the router.
+- **All of it is in git, and each piece of work is an issue.** In 2024 I kept no record, and that is why nobody knew the NVMe drive held a pool.
+
+## The names
+
+I wanted a naming scheme. I have used the name Icarus for years, and I like the darker side of Greek mythology and the Hades games.
+
+The agent proposed the line of Nyx. In Hesiod, Chaos gives birth to Nyx, the Night. Nyx and Erebus, the Darkness, have a long list of dark children. So the server is `nyx`. The storage pool is `erebus`. The sandbox network, where things break, is `chaos`. The machine with the GPU, which makes dreams, is `morpheus`. The backup job is `charon`. Disposable machines are shades, and the first test machine is `skelly`.
+
+A naming scheme with a true parent and child structure turned out to be useful. It tells you where a thing lives.
+
+## What runs now
+
+| Piece | State |
+| --- | --- |
+| Proxmox VE 9.2 on Debian 13 | Upgraded from 8.2, kernel 7.0 |
+| Storage | 2 TB pool for guests, system disk for backups |
+| Sandbox network | Isolated from the home network, tested |
+| Template | Debian 13 with cloud-init. A new machine takes about 35 seconds |
+| Backups | Nightly, with a restore test that passed |
+| GPU machine | GTX 980 passed through, Ollama with two models |
+| Remote access | Tailscale |
+
+## The first response
+
+The first thing I asked the local model was about its own host.
+
+> Who is Nyx in Greek mythology? Answer in two sentences.
+
+It answered at 44 tokens each second, fully on the old GPU:
+
+> In Greek mythology, Nyx (also known as Nox) was the goddess of night, born from the void of chaos at the beginning of the universe. She was the mother of the twelve Titans and the personification of darkness, shadow, and the underworld, often depicted as the sister and consort of Uranus, the sky god.
+
+The first sentence is right. The second is wrong two times. Gaia is the mother of the Titans, and the consort of Nyx is Erebus. The agent caught the error before I did.
+
+I am keeping that answer. A server asked a model that runs on it who it is named after, and the model gave it the wrong children. It is an honest picture of what a small local model is, and it is the reason the old GPU gets the small jobs.
+
+## What I would tell someone who wants to do the same
+
+- **Let the agent read before it acts.** Each fix today came from a comparison of facts: my laptop's gateway against the server's, the labels on one disk against the other.
+- **Ask for the questions before the build.** The design session took less time than one of the faults.
+- **Keep a record from the first hour.** I set up the repository and the issue tracker before the build started. I should have done it before the upgrade.
+- **Set the rules for the agent early.** It committed directly to the main branch seven times before I noticed. That was my rule to set and I had not set it. One sentence fixed it for the rest of the day.
+- **Stay near the machine.** Three times today, only a person at the keyboard could move the work: a loose cable, a recovery prompt, and the BIOS.
+
+## What is next
+
+The server now had a GPU, a model, and nothing useful to do with them. The next Post is about the first real job: a voice assistant for my home that runs on my own hardware, and what happened when I asked it to make the lights green.
