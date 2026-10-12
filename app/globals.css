@@ -57,3 +57,13 @@ body {
 
 /* The Jev easter egg (components/jev/JevTitle.tsx) arrives with a short rise. */
 @keyframes jev-egg { from { opacity: 0; translate: 0 12px; } }
+
+/* Syntax highlighting in a Code Block (components/mdx/rehypeCode.ts). Shiki writes the two
+   colors of a token as --shiki-light and --shiki-dark. The root class selects one. A token
+   with no variable keeps the color of the pre. */
+[data-code-block] code span {
+  color: var(--shiki-light);
+}
+.dark [data-code-block] code span {
+  color: var(--shiki-dark);
+}

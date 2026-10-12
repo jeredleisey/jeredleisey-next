@@ -1,5 +1,6 @@
 import type { Config } from 'tailwindcss';
 import typography from '@tailwindcss/typography';
+import { codePalette } from './components/mdx/codePalette';
 
 export default {
   darkMode: 'class',
@@ -19,6 +20,13 @@ export default {
           amber: '#CC922F',
           espresso: '#1C1714',
           orange: '#FF4F00',
+          // The tones of syntax highlighting (components/mdx/codePalette.ts).
+          'code-comment-light': codePalette.light.comment,
+          'code-string-light': codePalette.light.string,
+          'code-keyword-light': codePalette.light.keyword,
+          'code-comment-dark': codePalette.dark.comment,
+          'code-string-dark': codePalette.dark.string,
+          'code-keyword-dark': codePalette.dark.keyword,
         },
       },
       fontFamily: {

@@ -6,7 +6,7 @@ import type {
 } from 'next-mdx-remote-client/rsc';
 import remarkGfm from 'remark-gfm';
 import { CodeBlock } from './CodeBlock';
-import { rehypeCodeLanguage } from './rehypeCodeLanguage';
+import { rehypeCode } from './rehypeCode';
 
 // The one place that renders MDX on the site. A Post, an Update, the About page, and the
 // Privacy page all call Mdx and hold no MDX setup of their own.
@@ -14,7 +14,7 @@ import { rehypeCodeLanguage } from './rehypeCodeLanguage';
 // The MDX options for all content on the site: Posts, Updates, and the About and
 // Privacy pages. GFM adds tables, strikethrough, task lists, and bare links.
 const options: MDXRemoteOptions = {
-  mdxOptions: { remarkPlugins: [remarkGfm], rehypePlugins: [rehypeCodeLanguage] },
+  mdxOptions: { remarkPlugins: [remarkGfm], rehypePlugins: [rehypeCode] },
 };
 
 // The map of components that MDX uses in place of plain HTML elements. A code fence is a Code Block.
