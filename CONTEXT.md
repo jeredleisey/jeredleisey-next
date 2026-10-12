@@ -30,6 +30,12 @@ _Avoid_: Unpublished, hidden, private
 One call that a User makes from a Project to a paid model API. Each Run has a cost to Jered.
 _Avoid_: Request, call, query
 
+### Content in a Post or an Update
+
+**Code Block**:
+A framed piece of code, a command, or terminal output in a Post or an Update. Its header names the language, such as Shell, JSON, or Text.
+_Avoid_: Snippet, code box
+
 ### Access
 
 **User**:

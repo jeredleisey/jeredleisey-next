@@ -18,7 +18,7 @@ describe('renderMdx', () => {
   it('still renders block quotes and fenced code', async () => {
     const html = await render(['> A quote.', '', '```', 'a | b', '```'].join('\n'));
     expect(html).toContain('<blockquote>');
-    expect(html).toContain('<pre><code>a | b');
+    expect(html).toMatch(/<pre[^>]*><code>a \| b/);
   });
 
   it('puts the content in the reading prose styles', async () => {
