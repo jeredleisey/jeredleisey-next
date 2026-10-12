@@ -22,6 +22,7 @@ describe('Copy button', () => {
   });
 
   afterEach(() => {
+    vi.useRealTimers();
     if (original) Object.defineProperty(navigator, 'clipboard', original);
     else Reflect.deleteProperty(navigator, 'clipboard');
   });
@@ -156,5 +157,55 @@ describe('Copy button', () => {
     clickCopy();
     await act(async () => {});
     expect(writeText).toHaveBeenCalledWith('echo second');
+  });
+
+  // A clipboard mock whose writes resolve when the test says so.
+  function mockSlowClipboard() {
+    const resolvers: Array<() => void> = [];
+    mockClipboard(
+      () => new Promise<void>((resolve) => resolvers.push(resolve))
+    );
+    return resolvers;
+  }
+
+  it('starts no timer when a write resolves after the Code Block is gone', async () => {
+    vi.useFakeTimers();
+    const resolvers = mockSlowClipboard();
+    const { unmount } = render(
+      <CodeBlock>
+        <code>{'echo hi\n'}</code>
+      </CodeBlock>
+    );
+    clickCopy();
+    unmount();
+    await act(async () => {
+      resolvers[0]();
+    });
+    expect(vi.getTimerCount()).toBe(0);
+  });
+
+  it('ignores an older write that resolves after a newer one', async () => {
+    vi.useFakeTimers();
+    const resolvers = mockSlowClipboard();
+    render(
+      <CodeBlock>
+        <code>{'echo hi\n'}</code>
+      </CodeBlock>
+    );
+    const status = screen.getByRole('status');
+    clickCopy();
+    clickCopy();
+    await act(async () => {
+      resolvers[1]();
+    });
+    expect(status).toHaveTextContent('Copied');
+    act(() => {
+      vi.advanceTimersByTime(2000);
+    });
+    expect(status).toHaveTextContent('');
+    await act(async () => {
+      resolvers[0]();
+    });
+    expect(status).toHaveTextContent('');
   });
 });

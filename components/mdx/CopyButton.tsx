@@ -33,13 +33,23 @@ const iconProps = {
 export function CopyButton() {
   const ref = useRef<HTMLButtonElement>(null);
   const timer = useRef<ReturnType<typeof setTimeout>>(undefined);
+  // The number of the latest click. A write that finishes late checks it and does nothing when
+  // a newer click or an unmount came first.
+  const latest = useRef(0);
   const [copied, setCopied] = useState(false);
 
-  useEffect(() => () => clearTimeout(timer.current), []);
+  useEffect(
+    () => () => {
+      latest.current += 1;
+      clearTimeout(timer.current);
+    },
+    []
+  );
 
   async function copy() {
     const code = ref.current ? visibleCode(ref.current) : null;
     if (code === null) return;
+    const click = ++latest.current;
     try {
       await navigator.clipboard.writeText(code.replace(/\n$/, ''));
     } catch {
@@ -47,6 +57,7 @@ export function CopyButton() {
       // The button then shows no success state.
       return;
     }
+    if (click !== latest.current) return;
     setCopied(true);
     clearTimeout(timer.current);
     timer.current = setTimeout(() => setCopied(false), COPIED_MS);
