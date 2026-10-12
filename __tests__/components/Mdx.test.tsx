@@ -1,15 +1,12 @@
 import { describe, it, expect } from 'vitest';
-import { evaluate } from 'next-mdx-remote-client/rsc';
 import { renderToStaticMarkup } from 'react-dom/server';
-import { mdxOptions } from '@/lib/mdxOptions';
+import { renderMdx } from '@/components/mdx/Mdx';
 
 async function render(source: string): Promise<string> {
-  const { content, error } = await evaluate({ source, options: mdxOptions });
-  if (error) throw error;
-  return renderToStaticMarkup(content);
+  return renderToStaticMarkup(await renderMdx(source));
 }
 
-describe('mdxOptions', () => {
+describe('renderMdx', () => {
   it('renders a GFM table as a table element', async () => {
     const html = await render(['| Piece | State |', '| --- | --- |', '| Storage | 2 TB |'].join('\n'));
     expect(html).toContain('<table>');
@@ -22,5 +19,14 @@ describe('mdxOptions', () => {
     const html = await render(['> A quote.', '', '```', 'a | b', '```'].join('\n'));
     expect(html).toContain('<blockquote>');
     expect(html).toContain('<pre><code>a | b');
+  });
+
+  it('puts the content in the reading prose styles', async () => {
+    const html = await render('A paragraph.');
+    expect(html).toMatch(/^<div class="prose [^"]*"><p>A paragraph\.<\/p><\/div>$/);
+  });
+
+  it('throws when the MDX does not compile', async () => {
+    await expect(render('<Unclosed>')).rejects.toThrow();
   });
 });
