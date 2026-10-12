@@ -120,6 +120,15 @@ describe('Code Block', () => {
       expect(colors.get('&&')).not.toBe(colors.get('npm'));
     });
 
+    it('keeps the semicolon at the end of a TypeScript statement in the plain tone', async () => {
+      const root = await mount(fence('ts', 'let value;'));
+      const colors = lightColors(root);
+      // Shiki joins neighbors of one color, so the semicolon may sit in the token of the name.
+      const colorOf = (part: string) => [...colors].find(([text]) => text.includes(part))?.[1];
+      expect(colorOf(';')).toBeDefined();
+      expect(colorOf(';')).toBe(colorOf('value'));
+    });
+
     it.each(['', 'text', 'txt'])('shows a fence with the language "%s" in the plain tone only', async (word) => {
       const root = await mount(fence(word, 'def total(items): return 42'));
       expect(lightColors(root).size).toBe(0);

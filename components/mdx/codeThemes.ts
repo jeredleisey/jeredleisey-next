@@ -35,10 +35,12 @@ function makeTheme(name: string, type: 'light' | 'dark'): ThemeRegistration {
           'keyword.operator',
           'entity.name.tag',
           'markup.deleted',
-          // The shell separators between commands: && and ||, then ;. The pipe and the
-          // redirect already match keyword.operator.
-          'punctuation.separator.statement',
-          'punctuation.terminator.statement',
+          // The shell separators between commands: &&, a background &, and ;. The names end in
+          // .shell, so that the semicolon of JavaScript and other languages stays plain. The
+          // pipe, || and the redirect already match keyword.operator.
+          'punctuation.separator.statement.and.shell',
+          'punctuation.separator.statement.background.shell',
+          'punctuation.terminator.statement.semicolon.shell',
         ],
         settings: { foreground: tones.keyword },
       },
