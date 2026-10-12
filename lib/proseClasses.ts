@@ -17,6 +17,9 @@ export const proseClasses = [
   'prose-th:text-left prose-th:font-semibold prose-th:text-my-espresso dark:prose-th:text-my-cream prose-th:px-3 prose-th:py-2',
   'prose-td:text-my-walnut dark:prose-td:text-my-stone prose-td:px-3 prose-td:py-2 prose-td:align-top',
   'prose-thead:border-my-stone/60 dark:prose-thead:border-my-stone/40 prose-tr:border-my-stone/30 dark:prose-tr:border-my-stone/20',
+  // figures: a screenshot gets a thin frame, so that a dark image has an edge on a dark page
+  'prose-img:rounded-md prose-img:border prose-img:border-my-stone/30 dark:prose-img:border-my-espresso/40',
+  'prose-figcaption:text-my-walnut/80 dark:prose-figcaption:text-my-stone/80 prose-figcaption:text-[0.85em]',
   // links
   'prose-a:text-my-orange prose-a:no-underline hover:prose-a:text-my-espresso dark:hover:prose-a:text-my-cream',
   // code stays monospace, not serif
