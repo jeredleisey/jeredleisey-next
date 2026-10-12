@@ -1,5 +1,6 @@
 import { useId, type ComponentPropsWithoutRef } from 'react';
 import { labelForLanguage } from './languages';
+import { CopyButton } from './CopyButton';
 
 type PreProps = ComponentPropsWithoutRef<'pre'> & { 'data-language'?: string };
 
@@ -29,6 +30,7 @@ export function CodeBlock({ children, 'data-language': language }: PreProps) {
         <span id={labelId} data-code-label>
           {labelForLanguage(language)}
         </span>
+        <CopyButton />
       </div>
       <CodeBody>{children}</CodeBody>
     </figure>

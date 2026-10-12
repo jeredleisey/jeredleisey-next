@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { renderToStaticMarkup } from 'react-dom/server';
+import { within } from '@testing-library/react';
 import { renderMdx } from '@/components/mdx/Mdx';
 
 // Seam 1: MDX source in, static HTML out. The static HTML goes into a DOM element so that the
@@ -141,5 +142,14 @@ describe('Code Block', () => {
       expect(labelOf(root.querySelector('[data-code-block]')!)).toBe('klingon');
       expect(root.querySelector('pre code')?.textContent).toBe('def total(items): return 42\n');
     });
+  });
+
+  it('gives each Code Block a button named "Copy code"', async () => {
+    const root = await mount([fence('sh'), '', fence('')].join('\n'));
+    const blocks = root.querySelectorAll<HTMLElement>('[data-code-block]');
+    expect(blocks).toHaveLength(2);
+    for (const block of blocks) {
+      expect(within(block).getByRole('button', { name: 'Copy code' })).toHaveAttribute('type', 'button');
+    }
   });
 });
