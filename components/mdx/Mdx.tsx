@@ -6,6 +6,7 @@ import type {
 } from 'next-mdx-remote-client/rsc';
 import remarkGfm from 'remark-gfm';
 import { CodeBlock } from './CodeBlock';
+import { CodeGroup } from './CodeGroup';
 import { rehypeCode } from './rehypeCode';
 
 // The one place that renders MDX on the site. A Post, an Update, the About page, and the
@@ -17,8 +18,9 @@ const options: MDXRemoteOptions = {
   mdxOptions: { remarkPlugins: [remarkGfm], rehypePlugins: [rehypeCode] },
 };
 
-// The map of components that MDX uses in place of plain HTML elements. A code fence is a Code Block.
-const components: MDXComponents = { pre: CodeBlock };
+// The map of components that MDX uses in place of plain HTML elements. A code fence is a Code Block, and
+// the CodeGroup tag is a Code Group.
+const components: MDXComponents = { pre: CodeBlock, CodeGroup };
 
 // Shared editorial prose styling for all long-form reading surfaces
 // (essays, lessons, project writeups). Serif body and serif headings (Newsreader),
