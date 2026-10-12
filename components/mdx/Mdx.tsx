@@ -1,8 +1,28 @@
+import type { ReactElement } from 'react';
+import { evaluate } from 'next-mdx-remote-client/rsc';
+import type {
+  MDXComponents,
+  MDXRemoteOptions,
+} from 'next-mdx-remote-client/rsc';
+import remarkGfm from 'remark-gfm';
+
+// The one place that renders MDX on the site. A Post, an Update, the About page, and the
+// Privacy page all call Mdx and hold no MDX setup of their own.
+
+// The MDX options for all content on the site: Posts, Updates, and the About and
+// Privacy pages. GFM adds tables, strikethrough, task lists, and bare links.
+const options: MDXRemoteOptions = {
+  mdxOptions: { remarkPlugins: [remarkGfm] },
+};
+
+// The map of components that MDX uses in place of plain HTML elements. It is empty for now.
+const components: MDXComponents = {};
+
 // Shared editorial prose styling for all long-form reading surfaces
 // (essays, lessons, project writeups). Serif body and serif headings (Newsreader),
 // constrained reading measure. The single source of truth for
 // how prose content reads across the site.
-export const proseClasses = [
+const proseClasses = [
   'prose prose-lg max-w-[68ch] font-serif',
   // Headings use the serif at medium weight, to match the serif titles (#92).
   'prose-headings:font-serif prose-headings:font-medium prose-headings:text-my-espresso dark:prose-headings:text-my-cream',
@@ -26,3 +46,17 @@ export const proseClasses = [
   'prose-code:font-mono prose-code:text-my-amber prose-code:bg-my-stone/20 dark:prose-code:bg-my-espresso/50 prose-code:px-1 prose-code:rounded',
   'prose-pre:font-mono prose-pre:bg-my-stone/20 dark:prose-pre:bg-my-espresso/50 prose-pre:border prose-pre:border-my-stone/30 dark:prose-pre:border-my-espresso/30',
 ].join(' ');
+
+// MDX source in, rendered content out. Tests call this directly, with no browser and no
+// Next server. MDX that does not compile throws, the same as the MDXRemote component
+// does when it has no onError.
+export async function renderMdx(source: string): Promise<ReactElement> {
+  const { content, error } = await evaluate({ source, options, components });
+  if (error) throw error;
+  return <div className={proseClasses}>{content}</div>;
+}
+
+// The server component for pages: <Mdx source={...} />.
+export async function Mdx({ source }: { source: string }) {
+  return renderMdx(source);
+}

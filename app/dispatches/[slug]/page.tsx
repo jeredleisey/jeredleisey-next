@@ -1,10 +1,8 @@
 import { notFound } from 'next/navigation';
 import { ReadingTransition } from '@/components/PageTransitions';
-import { MDXRemote } from 'next-mdx-remote-client/rsc';
 import { ReadingLayout } from '@/components/reading/ReadingLayout';
 import { getPost, getPosts, getSeries, getSeriesPart, readingMinutes } from '@/lib/content';
-import { mdxOptions } from '@/lib/mdxOptions';
-import { proseClasses } from '@/lib/proseClasses';
+import { Mdx } from '@/components/mdx/Mdx';
 
 // Drafts show only while Jered runs the site in development. The build lists only
 // published Posts, and a slug that is not listed is a 404, so a Draft gets no page.
@@ -62,9 +60,7 @@ export default async function PostPage({ params }: Props) {
           { label: 'Use cases', param: 'useCase', values: post.useCases },
         ]}
       >
-        <div className={proseClasses}>
-          <MDXRemote source={post.content} options={mdxOptions} />
-        </div>
+        <Mdx source={post.content} />
       </ReadingLayout>
     </ReadingTransition>
   );

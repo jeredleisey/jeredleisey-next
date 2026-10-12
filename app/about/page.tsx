@@ -1,9 +1,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import matter from 'gray-matter';
-import { MDXRemote } from 'next-mdx-remote-client/rsc';
-import { mdxOptions } from '@/lib/mdxOptions';
-import { proseClasses } from '@/lib/proseClasses';
+import { Mdx } from '@/components/mdx/Mdx';
 
 // The About page is one MDX file. The reader stays here because no other page uses it.
 function readAbout() {
@@ -25,9 +23,7 @@ export default function AboutPage() {
   return (
     <div className="p-pad-2 max-w-2xl">
       <h1 className="text-my-walnut dark:text-my-stone text-xs uppercase tracking-widest mb-pad-2">{about.title}</h1>
-      <div className={proseClasses}>
-        <MDXRemote source={about.content} options={mdxOptions} />
-      </div>
+      <Mdx source={about.content} />
     </div>
   );
 }

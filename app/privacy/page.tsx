@@ -1,9 +1,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import matter from 'gray-matter';
-import { MDXRemote } from 'next-mdx-remote-client/rsc';
-import { mdxOptions } from '@/lib/mdxOptions';
-import { proseClasses } from '@/lib/proseClasses';
+import { Mdx } from '@/components/mdx/Mdx';
 
 // The privacy page is one MDX file, read the same way as the About page. Google links to it
 // from the sign-in consent screen.
@@ -26,9 +24,7 @@ export default function PrivacyPage() {
   return (
     <div className="p-pad-2 max-w-2xl">
       <h1 className="text-my-walnut dark:text-my-stone text-xs uppercase tracking-widest mb-pad-2">{privacy.title}</h1>
-      <div className={proseClasses}>
-        <MDXRemote source={privacy.content} options={mdxOptions} />
-      </div>
+      <Mdx source={privacy.content} />
     </div>
   );
 }
