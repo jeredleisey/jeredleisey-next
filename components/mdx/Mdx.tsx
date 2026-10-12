@@ -5,6 +5,8 @@ import type {
   MDXRemoteOptions,
 } from 'next-mdx-remote-client/rsc';
 import remarkGfm from 'remark-gfm';
+import { CodeBlock } from './CodeBlock';
+import { rehypeCodeLanguage } from './rehypeCodeLanguage';
 
 // The one place that renders MDX on the site. A Post, an Update, the About page, and the
 // Privacy page all call Mdx and hold no MDX setup of their own.
@@ -12,11 +14,11 @@ import remarkGfm from 'remark-gfm';
 // The MDX options for all content on the site: Posts, Updates, and the About and
 // Privacy pages. GFM adds tables, strikethrough, task lists, and bare links.
 const options: MDXRemoteOptions = {
-  mdxOptions: { remarkPlugins: [remarkGfm] },
+  mdxOptions: { remarkPlugins: [remarkGfm], rehypePlugins: [rehypeCodeLanguage] },
 };
 
-// The map of components that MDX uses in place of plain HTML elements. It is empty for now.
-const components: MDXComponents = {};
+// The map of components that MDX uses in place of plain HTML elements. A code fence is a Code Block.
+const components: MDXComponents = { pre: CodeBlock };
 
 // Shared editorial prose styling for all long-form reading surfaces
 // (essays, lessons, project writeups). Serif body and serif headings (Newsreader),
@@ -44,7 +46,6 @@ const proseClasses = [
   'prose-a:text-my-orange prose-a:no-underline hover:prose-a:text-my-espresso dark:hover:prose-a:text-my-cream',
   // code stays monospace, not serif
   'prose-code:font-mono prose-code:text-my-amber prose-code:bg-my-stone/20 dark:prose-code:bg-my-espresso/50 prose-code:px-1 prose-code:rounded',
-  'prose-pre:font-mono prose-pre:bg-my-stone/20 dark:prose-pre:bg-my-espresso/50 prose-pre:border prose-pre:border-my-stone/30 dark:prose-pre:border-my-espresso/30',
 ].join(' ');
 
 // MDX source in, rendered content out. Tests call this directly, with no browser and no
