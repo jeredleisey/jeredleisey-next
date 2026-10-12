@@ -2,12 +2,13 @@ import type { Element, Root, RootContent } from 'hast';
 import { grammarForLanguage } from './languages';
 import { getHighlighter, THEMES } from './highlighter';
 
-// A rehype plugin. For each pre element that holds a code element, it copies the language
-// of the fence (the language-xxx class of the code) to data-language on the pre. A fence
-// with no language gets no attribute. The Code Block reads the attribute from its props.
-// When the language has a grammar in the label table, it also replaces the text of the code
-// with highlighted line and token spans. Each token carries its two colors as the CSS
-// variables --shiki-light and --shiki-dark. A language with no grammar stays plain text.
+// A rehype plugin with two jobs. For each pre element that holds a code element:
+// 1. It copies the language of the fence (the language-xxx class of the code) to data-language
+//    on the pre. A fence with no language gets no attribute. The Code Block reads the attribute.
+// 2. When the language has a grammar in the label table, it replaces the text of the code with
+//    highlighted line and token spans. Each token carries its two colors as the CSS variables
+//    --shiki-light and --shiki-dark. A language with no grammar stays plain text.
+// A highlight that throws is not caught. It fails the render and the build.
 async function walk(node: Root | RootContent): Promise<void> {
   if (!('children' in node)) return;
   if (node.type === 'element' && node.tagName === 'pre') {
@@ -16,7 +17,8 @@ async function walk(node: Root | RootContent): Promise<void> {
     );
     const language = code && languageOf(code);
     if (language) node.properties = { ...node.properties, 'data-language': language };
-    if (code && grammarForLanguage(language)) await highlight(code, grammarForLanguage(language)!.id);
+    const grammar = grammarForLanguage(language);
+    if (code && grammar) await highlight(code, grammar);
   }
   for (const child of node.children) await walk(child);
 }

@@ -61,9 +61,9 @@ body {
 /* Syntax highlighting in a Code Block (components/mdx/rehypeCode.ts). Shiki writes the two
    colors of a token as --shiki-light and --shiki-dark. The root class selects one. A token
    with no variable keeps the color of the pre. */
-[data-code-block] pre span {
+[data-code-block] code span {
   color: var(--shiki-light);
 }
-.dark [data-code-block] pre span {
+.dark [data-code-block] code span {
   color: var(--shiki-dark);
 }
