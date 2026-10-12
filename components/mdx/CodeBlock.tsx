@@ -1,11 +1,12 @@
 import { useId, type ComponentPropsWithoutRef } from 'react';
 import { labelForLanguage } from './languages';
 import { CopyButton } from './CopyButton';
+import { FRAME_CLASSES, HEADER_CLASSES } from './codeFrame';
 
 type PreProps = ComponentPropsWithoutRef<'pre'> & { 'data-language'?: string };
 
 // The body of a Code Block: the pre with the code inside. It is a separate component because
-// a Code Group will use the same body in its tab panels.
+// a Code Group uses the same body in its tab panels.
 export function CodeBody({ children }: Pick<PreProps, 'children'>) {
   return (
     <pre className="m-0 overflow-x-auto px-5 py-4 font-mono text-sm leading-relaxed text-my-espresso dark:text-my-cream">
@@ -24,9 +25,9 @@ export function CodeBlock({ children, 'data-language': language }: PreProps) {
     <figure
       data-code-block
       aria-labelledby={labelId}
-      className="not-prose my-6 overflow-hidden rounded-xl border border-my-stone/50 bg-my-parchment dark:border-my-stone/15 dark:bg-my-cream/[0.04]"
+      className={FRAME_CLASSES}
     >
-      <div className="flex h-11 items-center border-b border-my-stone/50 px-5 font-sans text-[13px] text-my-walnut dark:border-my-stone/15 dark:text-my-stone">
+      <div className={HEADER_CLASSES}>
         <span id={labelId} data-code-label>
           {labelForLanguage(language)}
         </span>

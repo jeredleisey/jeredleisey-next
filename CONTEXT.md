@@ -36,6 +36,10 @@ _Avoid_: Request, call, query
 A framed piece of code, a command, or terminal output in a Post or an Update. Its header names the language, such as Shell, JSON, or Text.
 _Avoid_: Snippet, code box
 
+**Code Group**:
+A set of Code Blocks that show the same example in more than one language, in one frame with one tab for each language.
+_Avoid_: Tabs, tabbed code, code switcher
+
 ### Access
 
 **User**:
