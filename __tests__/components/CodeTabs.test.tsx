@@ -82,6 +82,23 @@ describe('Code Group tabs', () => {
     expect(python).toHaveAttribute('tabindex', '-1');
   });
 
+  it('leaves a key with a modifier alone, so that browser shortcuts still work', async () => {
+    const [python] = await renderGroup();
+    python.focus();
+    const presses = [
+      { key: 'ArrowRight', metaKey: true },
+      { key: 'ArrowLeft', altKey: true },
+      { key: 'Home', ctrlKey: true },
+      { key: 'End', shiftKey: true },
+    ];
+    for (const press of presses) {
+      const notCanceled = fireEvent.keyDown(python, press);
+      expect(notCanceled).toBe(true);
+      expect(python).toHaveAttribute('aria-selected', 'true');
+    }
+    expect(python).toHaveFocus();
+  });
+
   it('leaves other keys alone', async () => {
     const [python] = await renderGroup();
     const notCanceled = fireEvent.keyDown(python, { key: 'a' });
@@ -102,15 +119,36 @@ describe('Code Group copy button', () => {
     const writeText = vi.fn().mockResolvedValue(undefined);
     Object.defineProperty(navigator, 'clipboard', { value: { writeText }, configurable: true });
     const [, , shell] = await renderGroup();
-    const copy = screen.getByRole('button', { name: 'Copy code' });
-    fireEvent.click(copy);
+    fireEvent.click(screen.getByRole('button', { name: 'Copy code' }));
     await act(async () => {});
     expect(writeText).toHaveBeenLastCalledWith('print("py")');
     fireEvent.click(shell);
-    fireEvent.click(copy);
+    // A tab change makes a new copy button, so the test finds it again.
+    fireEvent.click(screen.getByRole('button', { name: 'Copy code' }));
     await act(async () => {});
     expect(writeText).toHaveBeenLastCalledWith('echo sh');
     expect(writeText).toHaveBeenCalledTimes(2);
+  });
+
+  it('resets to "Copy code" with no "Copied" status when the tab changes, and keeps the focus on the tab', async () => {
+    Object.defineProperty(navigator, 'clipboard', {
+      value: { writeText: vi.fn().mockResolvedValue(undefined) },
+      configurable: true,
+    });
+    const [python, typescript] = await renderGroup();
+    fireEvent.click(screen.getByRole('button', { name: 'Copy code' }));
+    await act(async () => {});
+    expect(screen.getByRole('status')).toHaveTextContent('Copied');
+    typescript.focus();
+    fireEvent.click(typescript);
+    expect(screen.getByRole('status')).toHaveTextContent('');
+    expect(screen.getByRole('button', { name: 'Copy code' })).toBeInTheDocument();
+    expect(typescript).toHaveFocus();
+    fireEvent.click(screen.getByRole('button', { name: 'Copy code' }));
+    await act(async () => {});
+    fireEvent.keyDown(typescript, { key: 'ArrowLeft' });
+    expect(screen.getByRole('status')).toHaveTextContent('');
+    expect(python).toHaveFocus();
   });
 
   it('is not one of the tabs', async () => {

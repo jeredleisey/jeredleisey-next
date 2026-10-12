@@ -18,6 +18,8 @@ export function CodeTabs({ labels, panels }: { labels: string[]; panels: ReactNo
   // The tabs pattern of WAI-ARIA with automatic activation: an arrow key moves the focus and
   // the selection together, and wraps at the ends.
   function onKeyDown(event: KeyboardEvent<HTMLDivElement>) {
+    // A key with a modifier is a browser shortcut, such as Cmd+Left for history back.
+    if (event.altKey || event.ctrlKey || event.metaKey || event.shiftKey) return;
     const last = labels.length - 1;
     let target: number;
     switch (event.key) {
@@ -70,7 +72,8 @@ export function CodeTabs({ labels, panels }: { labels: string[]; panels: ReactNo
             </button>
           ))}
         </div>
-        <CopyButton />
+        {/* A new key for each tab resets the copy button, so a check mark never stays next to other code. */}
+        <CopyButton key={selected} />
       </div>
       {panels.map((panel, i) => (
         <div key={labels[i]} role="tabpanel" id={panelId(i)} aria-labelledby={tabId(i)} hidden={i !== selected}>
