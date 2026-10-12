@@ -15,7 +15,7 @@ function fence(language: string, code = 'echo hi'): string {
 }
 
 function labelOf(block: Element): string {
-  return block.querySelector('figcaption')?.textContent ?? '';
+  return block.querySelector('[data-code-label]')?.textContent ?? '';
 }
 
 describe('Code Block', () => {
@@ -63,9 +63,23 @@ describe('Code Block', () => {
     expect(root.querySelector('pre')?.textContent).toBe(code + '\n');
   });
 
-  it('keeps the label out of the focus order', async () => {
+  it('shows the label as plain text, not as a control', async () => {
     const root = await mount(fence('sh'));
-    expect(root.querySelector('[data-code-block] [tabindex], [data-code-block] button, [data-code-block] a')).toBeNull();
+    const label = root.querySelector('[data-code-label]')!;
+    expect(label.matches('button, a, [role], [tabindex]')).toBe(false);
+  });
+
+  it('names the Code Block by its label', async () => {
+    const root = await mount(fence('sh'));
+    const block = root.querySelector('[data-code-block]')!;
+    const label = root.querySelector('[data-code-label]')!;
+    expect(label.id).not.toBe('');
+    expect(block.getAttribute('aria-labelledby')).toBe(label.id);
+  });
+
+  it('reads an uppercase fence word the same as a lowercase one', async () => {
+    const root = await mount(fence('SH'));
+    expect(labelOf(root.querySelector('[data-code-block]')!)).toBe('Shell');
   });
 
   it('does not put a Code Block around inline code', async () => {
